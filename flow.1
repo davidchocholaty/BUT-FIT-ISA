@@ -1,0 +1,40 @@
+.TH FLOW 1
+.SH NAME
+flow \-  creates NetFlow records from network data in pcap format
+.SH SYNOPSIS
+.B ./flow
+[\fB\-f\fR \fI<file>\fR]
+[\fB\-c\fR \fI<netflow_collector>[:<port>]\fR]
+[\fB\-a\fR \fI<active_timer>\fR]
+[\fB\-i\fR \fI<inactive_timer>\fR]
+[\fB\-m\fR \fI<count>\fR]
+.SH DESCRIPTION
+.B flow
+is a tool implementing the NetFlow exporter.
+It generates the NetFlow data (NetFlow records) from the captured network data from the network communication.
+The captured data are in pcap format and the resulting NetFlow records are sent to the collector.
+.SH OPTIONS
+.TP
+.BR \-f =\fI<file>\fR
+The name of the parsed file.
+Default is STDIN.
+.TP
+.BR \-c =\fI<neflow_collector:port>\fR
+Sets the IP address or hostname of the NetFlow collector.
+Optionally, also a UDP port can be set.
+The default is 127.0.0.1:2055.
+.TP
+.BR \-a =\fI<active_timer>\fR
+Sets the interval in seconds after which active records are exported to the collector.
+The default is 60.
+.TP
+.BR \-i =\fI<seconds>\fR
+Sets the interval in seconds after which inactive records are exported to the collector.
+The default is 10.
+.TP
+.BR \-m =\fI<count>\fR
+The flow-cache size.
+When the maximum size is reached, the oldest record in the cache is exported to the collector.
+The default is 1024.
+.SH OUTPUT
+.SH EXAMPLES
