@@ -15,7 +15,6 @@
 #define FLOW_OPTION_H
 
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdint.h>
 
 typedef struct analyzed_input* analyzed_input_t;

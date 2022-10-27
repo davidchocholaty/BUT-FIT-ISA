@@ -15,20 +15,19 @@
 #define FLOW_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "option.h"
 
 /*
  * Function to handle needed operations before ending of flow program.
- * The needed operations are:
- * - close input file
+ * The needed operations is:
  * - free options allocated memory
  *
- * @param options Pointer to pointer options storage.
- * @param argv    Arguments.
- * @return        Status of function processing.
+ * @param options      Pointer to pointer options storage.
+ * @return             Status of function processing.
  */
-uint8_t flow_epilogue (options_t* options, char* argv[]);
+uint8_t flow_epilogue (options_t* options);
 
 /*
  * Main function of Netflow exporter.

@@ -18,33 +18,18 @@
 #include "error.h"
 #include "memory.h"
 #include "option.h"
+#include "pcap.h"
 
 /*
  * Function to handle needed operations before ending of flow program.
- * The needed operations are:
- * - close input file
+ * The needed operations is:
  * - free options allocated memory
  *
- * @param options Pointer to pointer options storage.
- * @param argv    Arguments.
- * @return        Status of function processing.
+ * @param options      Pointer to pointer options storage.
+ * @return             Status of function processing.
  */
-uint8_t flow_epilogue (options_t* options, char* argv[])
+uint8_t flow_epilogue (options_t* options)
 {
-    // TODO later when handling with file
-    argv = argv;
-    /*
-    // Close input file if possible.
-    if (options->analyzed_input_source->source == NULL)
-    {
-        print_error(CLOSING_INPUT_FILE_ERROR, argv[0]);
-
-        return CLOSING_INPUT_FILE_ERROR;
-    }
-
-    fclose(options->analyzed_input_source->source);
-    */
-
     // Free options allocated memory.
     free_options_mem(options);
 
@@ -65,8 +50,9 @@ int main (int argc, char* argv[])
     }
 
     // TODO handling pcap
+    handle_pcap(options->analyzed_input_source->file_name);
 
-    status = flow_epilogue(&options, argv);
+    status = flow_epilogue(&options);
 
     if (status != NO_ERROR)
     {

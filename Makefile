@@ -2,7 +2,7 @@
 #
 # File: Makefile
 # Created: 2022-09-28
-# Last change: 2022-10-13
+# Last change: 2022-10-26
 # Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>
 # Project: Project for the course ISA - variant 1
 #          - Generation of NetFlow data from captured
@@ -19,7 +19,8 @@ ERR = error
 OPT = option
 UTIL = util
 MEM = memory
-OBJS = $(EXECUTABLE).o $(ERR).o $(OPT).o $(UTIL).o $(MEM).o
+PCAP = pcap
+OBJS = $(EXECUTABLE).o $(ERR).o $(OPT).o $(UTIL).o $(MEM).o $(PCAP).o
 LOGIN = xchoch09
 TAR_FILE = $(LOGIN).tar
 TAR_OPTIONS =  --exclude-vcs -cvf

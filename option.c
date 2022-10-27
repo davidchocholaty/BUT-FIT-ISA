@@ -150,14 +150,6 @@ uint8_t parse_options (int argc, char* argv[], options_t options)
 
                 strcpy(options->analyzed_input_source->file_name, optarg);
 
-                // TODO where to open the file (if here or later).
-                //options->analyzed_input_source->source = fopen(optarg, "r");
-
-                //if (options->analyzed_input_source->source == NULL)
-                //{
-                //    return INVALID_INPUT_FILE_ERROR;
-                //}
-
                 break;
             case 'c':
                 // The second occurrence of the parameter.
