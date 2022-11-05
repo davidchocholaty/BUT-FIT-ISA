@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "option.h"
+#include "netflow_v5.h"
 
 /*
  * The function figures out if the pointer points
@@ -109,43 +110,148 @@ uint8_t allocate_string (char** string, size_t characters_number)
     return EXIT_SUCCESS;
 }
 
+uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
+{
+    *netflow_records =
+            (netflow_recording_system_t) malloc(sizeof(struct netflow_recording_system));
+
+    if (!is_allocated(*netflow_records))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+uint8_t allocate_netflow_record (netflow_v5_flow_record_t* flow_record)
+{
+    *flow_record =
+            (netflow_v5_flow_record_t) malloc(sizeof(struct netflow_v5_flow_record));
+
+    if (!is_allocated(*flow_record))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+uint8_t allocate_netflow_key (netflow_v5_key_t* flow_key)
+{
+    *flow_key =
+            (netflow_v5_key_t) malloc(sizeof(struct netflow_v5_key));
+
+    if (!is_allocated(flow_key))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+uint8_t allocate_tree_node (bst_node_t* tree_node)
+{
+    *tree_node =
+            (bst_node_t) malloc(sizeof(struct bst_node));
+
+    if (!is_allocated(*tree_node))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+void free_netflow_record (netflow_v5_flow_record_t flow_record)
+{
+    if (is_allocated(flow_record))
+    {
+        free(flow_record);
+        flow_record = NULL;
+    }
+}
+
+void free_netflow_key (netflow_v5_key_t flow_key)
+{
+    if (is_allocated(flow_key))
+    {
+        free(flow_key);
+        flow_key = NULL;
+    }
+}
+
+void free_tree_node (bst_node_t tree_node)
+{
+    if (is_allocated(tree_node))
+    {
+        if (is_allocated(tree_node->key))
+        {
+            free_netflow_key(tree_node->key);
+        }
+
+        if (is_allocated(tree_node->value))
+        {
+            free_netflow_record(tree_node->value);
+        }
+
+        free(tree_node);
+        tree_node = NULL;
+    }
+}
+
 /*
  * Function for freeing memory which was allocated for the options structure
  * and the substructures.
  *
  * @param options Pointer to pointer options storage.
  */
-void free_options_mem (options_t* options)
+void free_options_mem (options_t options)
 {
-    if (is_allocated(*options))
+    if (is_allocated(options))
     {
-        if (is_allocated((*options)->netflow_collector_source) &&
-            is_allocated((*options)->netflow_collector_source->source))
+        if (is_allocated(options->netflow_collector_source) &&
+            is_allocated(options->netflow_collector_source->source))
         {
-            free((*options)->netflow_collector_source->source);
-            (*options)->netflow_collector_source->source = NULL;
+            free(options->netflow_collector_source->source);
+            options->netflow_collector_source->source = NULL;
         }
 
-        if (is_allocated((*options)->analyzed_input_source) &&
-            is_allocated((*options)->analyzed_input_source->file_name))
+        if (is_allocated(options->analyzed_input_source) &&
+            is_allocated(options->analyzed_input_source->file_name))
         {
-            free((*options)->analyzed_input_source->file_name);
-            (*options)->analyzed_input_source->file_name = NULL;
+            free(options->analyzed_input_source->file_name);
+            options->analyzed_input_source->file_name = NULL;
         }
 
-        free((*options)->analyzed_input_source);
-        free((*options)->netflow_collector_source);
-        free((*options)->active_entries_timeout);
-        free((*options)->inactive_entries_timeout);
-        free((*options)->cached_entries_number);
+        free(options->analyzed_input_source);
+        free(options->netflow_collector_source);
+        free(options->active_entries_timeout);
+        free(options->inactive_entries_timeout);
+        free(options->cached_entries_number);
 
-        (*options)->analyzed_input_source = NULL;
-        (*options)->netflow_collector_source = NULL;
-        (*options)->active_entries_timeout = NULL;
-        (*options)->inactive_entries_timeout = NULL;
-        (*options)->cached_entries_number = NULL;
+        options->analyzed_input_source = NULL;
+        options->netflow_collector_source = NULL;
+        options->active_entries_timeout = NULL;
+        options->inactive_entries_timeout = NULL;
+        options->cached_entries_number = NULL;
 
-        free(*options);
-        *options = NULL;
+        free(options);
+        options = NULL;
     }
+}
+
+void free_recording_system (netflow_recording_system_t netflow_records)
+{
+    if (is_allocated(netflow_records))
+    {
+        free(netflow_records);
+        netflow_records = NULL;
+    }
+}
+
+void free_allocated_mem (options_t options,
+                         netflow_recording_system_t netflow_records)
+{
+    free_options_mem(options);
+    free_recording_system(netflow_records);
 }

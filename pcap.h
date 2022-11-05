@@ -15,10 +15,12 @@
 #define FLOW_PCAP_H
 
 #include <stdio.h>
+#include "netflow_v5.h"
 
 /*
  * TODO
  */
-void handle_pcap (char* input_stream);
+void run_packets_processing (netflow_recording_system_t netflow_records,
+                             char* input_stream);
 
 #endif // FLOW_PCAP_H

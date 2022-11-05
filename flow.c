@@ -17,6 +17,7 @@
 
 #include "error.h"
 #include "memory.h"
+#include "netflow_v5.h"
 #include "option.h"
 #include "pcap.h"
 
@@ -25,15 +26,30 @@
  * The needed operations is:
  * - free options allocated memory
  *
- * @param options      Pointer to pointer options storage.
- * @return             Status of function processing.
+ * @param options         Pointer to pointer options storage.
+ * @param netflow_records Pointer to netflow recording system.
+ * @return                Status of function processing.
  */
-uint8_t flow_epilogue (options_t* options)
+uint8_t flow_epilogue (options_t options,
+                       netflow_recording_system_t netflow_records)
 {
+    bst_dispose(&(netflow_records->tree));
+
     // Free options allocated memory.
-    free_options_mem(options);
+    free_allocated_mem(options, netflow_records);
 
     return NO_ERROR;
+}
+
+uint8_t run_exporter (options_t options,
+                      netflow_recording_system_t netflow_records)
+{
+    bst_init(&(netflow_records->tree));
+
+    run_packets_processing(netflow_records,
+                           options->analyzed_input_source->file_name);
+
+    return 0;
 }
 
 /*
@@ -42,6 +58,7 @@ uint8_t flow_epilogue (options_t* options)
 int main (int argc, char* argv[])
 {
     options_t options = NULL;
+    netflow_recording_system_t netflow_records = NULL;
     uint8_t status = handle_options(argc, argv, &options);
 
     if (status != NO_ERROR)
@@ -49,10 +66,32 @@ int main (int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // TODO handling pcap
-    handle_pcap(options->analyzed_input_source->file_name);
+    status = allocate_recording_system(&netflow_records);
 
-    status = flow_epilogue(&options);
+    if (status != NO_ERROR)
+    {
+        print_error(MEMORY_HANDLING_ERROR, argv[0]);
+        flow_epilogue(options, netflow_records);
+
+        return EXIT_FAILURE;
+    }
+
+    status = run_exporter(options, netflow_records);
+
+    if (status != NO_ERROR)
+    {
+        print_error(status, argv[0]);
+        flow_epilogue(options, netflow_records);
+
+        return EXIT_FAILURE;
+    }
+
+
+    // TODO delete
+    // bst_preorder(netflow_records->tree);
+
+
+    status = flow_epilogue(options, netflow_records);
 
     if (status != NO_ERROR)
     {

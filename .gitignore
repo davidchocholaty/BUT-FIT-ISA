@@ -56,3 +56,12 @@ dkms.conf
 
 # CLion files
 .idea/
+
+# Test files
+test_pcap_files/
+
+# Tests output folder
+netflow_results/
+
+# Own file with useful commands and links
+useful_links_and_commands.txt

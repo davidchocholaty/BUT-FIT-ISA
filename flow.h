@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "netflow_v5.h"
 #include "option.h"
 
 /*
@@ -24,10 +25,12 @@
  * The needed operations is:
  * - free options allocated memory
  *
- * @param options      Pointer to pointer options storage.
- * @return             Status of function processing.
+ * @param options         Pointer to pointer options storage.
+ * @param netflow_records Pointer to netflow recording system.
+ * @return                Status of function processing.
  */
-uint8_t flow_epilogue (options_t* options);
+uint8_t flow_epilogue (options_t options,
+                       netflow_recording_system_t netflow_records);
 
 /*
  * Main function of Netflow exporter.
