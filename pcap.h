@@ -21,6 +21,6 @@
  * TODO
  */
 void run_packets_processing (netflow_recording_system_t netflow_records,
-                             char* input_stream);
+                             options_t options);
 
 #endif // FLOW_PCAP_H

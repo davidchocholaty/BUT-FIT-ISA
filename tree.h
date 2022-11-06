@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "netflow_v5.h"
+#include "option.h"
 
 struct netflow_v5_key; // Forward declaration
 struct netflow_v5_flow_record; // Forward declaration
@@ -49,7 +50,8 @@ void bst_dispose(bst_node_t* tree);
 
 void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree);
 
-// TODO remove
-void bst_preorder(bst_node_t tree);
+void bst_export_expired (bst_node_t* tree,
+                         struct timeval actual_time_stamp,
+                         options_t options);
 
 #endif // FLOW_TREE_H

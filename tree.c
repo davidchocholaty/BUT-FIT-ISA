@@ -30,6 +30,7 @@ bool bst_search(bst_node_t tree,
                 netflow_v5_flow_record_t *value) {
     if (tree != NULL)
     {
+        // TODO refactorization of function in if
         if (compare_flows(tree->key, key) == 0)
         {
             *value = tree->value;
@@ -95,21 +96,42 @@ uint8_t bst_insert(bst_node_t* tree,
 void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree) {
     bst_node_t tmp;
 
-    if (*tree != NULL && target != NULL)
+    // Tree has node right subtree
+    // (can occur only with outside call of the function).
+    if ((*tree)->right == NULL)
     {
-        if ((*tree)->right != NULL)
-        {
-            bst_replace_by_rightmost(target, &((*tree)->right));
-        }
-        else
-        {
-            target->key = (*tree)->key;
-            target->value = (*tree)->value;
-            tmp = *tree;
-            *tree = (*tree)->left;
-            free_tree_node(tmp);
-        }
+        free_netflow_key(&(target->key));
+        free_netflow_record(&(target->value));
+
+        tmp = *tree;
+
+        target->key = tmp->key;
+        target->value = tmp->value;
+        target->left = tmp->left;
+
+        free_tree_node_keep_data(&tmp);
+
+        return;
+
     }
+
+    if ((*tree)->right->right == NULL)
+    {
+        free_netflow_key(&(target->key));
+        free_netflow_record(&(target->value));
+
+        tmp = (*tree)->right;
+
+        target->key = tmp->key;
+        target->value = tmp->value;
+        (*tree)->right = tmp->left;
+
+        free_tree_node_keep_data(&tmp);
+
+        return;
+    }
+
+    bst_replace_by_rightmost(target, &((*tree)->right));
 }
 
 void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
@@ -131,7 +153,7 @@ void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
             {
                 if ((*tree)->left == NULL && (*tree)->right == NULL)
                 {
-                    free_tree_node(*tree);
+                    free_tree_node(tree);
                 }
                 else
                 {
@@ -141,17 +163,18 @@ void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
                     }
                     else
                     {
+                        tmp = *tree;
+
                         if ((*tree)->left == NULL)
                         {
-                            tmp = (*tree)->right;
+                            *tree = (*tree)->right;
                         }
                         else
                         {
-                            tmp = (*tree)->left;
+                            *tree = (*tree)->left;
                         }
 
-                        free_tree_node(*tree);
-                        *tree = tmp;
+                        free_tree_node(&tmp);
                     }
                 }
             }
@@ -165,7 +188,7 @@ void bst_dispose(bst_node_t* tree) {
         bst_dispose(&((*tree)->left));
         bst_dispose(&((*tree)->right));
 
-        free_tree_node(*tree);
+        free_tree_node(tree);
     }
 }
 
@@ -180,11 +203,37 @@ void bst_print_node(bst_node_t node) {
     node = node;
 }
 
-void bst_preorder(bst_node_t tree) {
-    if (tree != NULL)
+void bst_export_expired (bst_node_t* tree,
+                         struct timeval actual_time_stamp,
+                         options_t options)
+{
+    if (*tree != NULL)
     {
-        bst_print_node(tree);
-        bst_preorder(tree->left);
-        bst_preorder(tree->right);
+        bst_export_expired(&((*tree)->left), actual_time_stamp, options);
+        bst_export_expired(&((*tree)->right), actual_time_stamp, options);
+/*
+        if ((actual_time_stamp.tv_sec - (*tree)->value->first.tv_sec) >
+            options->active_entries_timeout->timeout_seconds) // Active timer check
+        {
+            // Flow expired because of active timer.
+            export_flow((*tree)->value);
+            // Remove tree node.
+            // TODO problem with removing node from tree
+            //bst_delete(tree, (*tree)->key);
+        }*/
+        /*
+        else */if (actual_time_stamp.tv_sec - (*tree)->value->last.tv_sec >
+            options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
+        {
+            // Flow expired because of inactive timer.
+            export_flow((*tree)->value);
+            // Remove tree node.
+            // TODO problem with removing node from tree
+            bst_delete(tree, (*tree)->key);
+        }
+
+        // TODO TCP flags etc.
+
+        //bst_print_node(tree);
     }
 }

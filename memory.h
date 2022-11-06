@@ -43,7 +43,7 @@ uint8_t allocate_string (char** string, size_t characters_number);
  *
  * @param options Pointer to pointer to options storage.
  */
-void free_options_mem (options_t options);
+void free_options_mem (options_t* options);
 
 /*
  * The function figures out if the pointer points
@@ -59,10 +59,13 @@ uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records);
 uint8_t allocate_netflow_record (netflow_v5_flow_record_t* flow_record);
 uint8_t allocate_netflow_key (netflow_v5_key_t* flow_key);
 uint8_t allocate_tree_node (bst_node_t* tree);
-void free_allocated_mem (options_t options,
-                         netflow_recording_system_t netflow_records);
-void free_recording_system (netflow_recording_system_t netflow_records);
+void free_allocated_mem (options_t* options,
+                         netflow_recording_system_t* netflow_records);
+void free_recording_system (netflow_recording_system_t* netflow_records);
+void free_netflow_record (netflow_v5_flow_record_t* flow_record);
 
-void free_netflow_key (netflow_v5_key_t flow_key);
-void free_tree_node (bst_node_t tree_node);
+void free_netflow_key (netflow_v5_key_t* flow_key);
+void free_tree_node (bst_node_t* tree_node);
+void free_tree_node_keep_data (bst_node_t* tree_node);
+
 #endif // FLOW_MEMORY_H

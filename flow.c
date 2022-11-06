@@ -36,7 +36,7 @@ uint8_t flow_epilogue (options_t options,
     bst_dispose(&(netflow_records->tree));
 
     // Free options allocated memory.
-    free_allocated_mem(options, netflow_records);
+    free_allocated_mem(&options, &netflow_records);
 
     return NO_ERROR;
 }
@@ -46,8 +46,8 @@ uint8_t run_exporter (options_t options,
 {
     bst_init(&(netflow_records->tree));
 
-    run_packets_processing(netflow_records,
-                           options->analyzed_input_source->file_name);
+    run_packets_processing(netflow_records, options);
+                           //options->analyzed_input_source->file_name);
 
     return 0;
 }

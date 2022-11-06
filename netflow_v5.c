@@ -29,16 +29,27 @@
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 
+#include <string.h>
+
 #include "error.h"
 #include "memory.h"
 #include "tree.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
 
+void export_flow (netflow_v5_flow_record_t flow)
+{
+    static int i = 1;
+    flow->tos = flow->tos;
+    printf("exporting flow %d\n", i);
+    i++;
+}
+
 uint8_t find_flow (bst_node_t* flows_tree,
                    netflow_v5_key_t packet_key,
-                   uint16_t packet_layer_3_bytes,
-                   uint8_t packet_tcp_flags)
+                   const struct timeval* packet_time_stamp,
+                   const uint16_t packet_layer_3_bytes,
+                   const uint8_t packet_tcp_flags)
 {
     uint8_t status = NO_ERROR;
     netflow_v5_flow_record_t flow = NULL;
@@ -126,6 +137,9 @@ uint8_t find_flow (bst_node_t* flows_tree,
         new_flow->src_mask = 0;
         new_flow->dst_mask = 0;
 
+        memcpy(&(new_flow->first), packet_time_stamp, sizeof(new_flow->first));
+        memcpy(&(new_flow->last), packet_time_stamp, sizeof(new_flow->last));
+
         // Add flow into the flows tree.
         status = bst_insert(flows_tree, new_key, new_flow);
     }
@@ -136,6 +150,8 @@ uint8_t find_flow (bst_node_t* flows_tree,
         flow->packets += 1;
         flow->octets += flow->octets + packet_layer_3_bytes;
         flow->tcp_flags |= packet_tcp_flags;
+
+        memcpy(&(flow->last), packet_time_stamp, sizeof(flow->last));
     }
 
     return status;
@@ -143,7 +159,8 @@ uint8_t find_flow (bst_node_t* flows_tree,
 
 uint8_t process_packet (netflow_recording_system_t netflow_records,
                         const struct pcap_pkthdr* header,
-                        const u_char* packet)
+                        const u_char* packet,
+                        options_t options)
 {
     struct ip* my_ip = NULL;
     const struct tcphdr* my_tcp = NULL;    // pointer to the beginning of TCP header
@@ -153,6 +170,17 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
     uint8_t tcp_flags = 0;
     uint8_t status = NO_ERROR;
     uint16_t packet_layer_3_bytes = header->len - SIZE_ETHERNET;
+    // Time stamp of an actual received packet
+    struct timeval packet_time_stamp = header->ts;
+/*
+    if (netflow_records->tree == NULL)
+    {
+        printf("process_packet: tree is null\n");
+    }
+*/
+    // Check timers with actual packet timestamp value
+    // and export the expired flows.
+    bst_export_expired(&(netflow_records->tree), packet_time_stamp, options);
 
     status = allocate_netflow_key(&packet_key);
 
@@ -181,7 +209,11 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             packet_key->dst_port = 0;
 
             // TODO packet_layer_3_bytes
-            find_flow(&(netflow_records->tree), packet_key, packet_layer_3_bytes, tcp_flags);
+            find_flow(&(netflow_records->tree),
+                      packet_key,
+                      &packet_time_stamp,
+                      packet_layer_3_bytes,
+                      tcp_flags);
             break;
         case IPPROTO_TCP: // TCP protocol
             my_tcp = (struct tcphdr *) (packet + SIZE_ETHERNET + size_ip); // pointer to the TCP header
@@ -192,7 +224,11 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             tcp_flags = my_tcp->th_flags;
 
             // TODO packet_layer_3_bytes
-            find_flow(&(netflow_records->tree), packet_key, packet_layer_3_bytes, tcp_flags);
+            find_flow(&(netflow_records->tree),
+                      packet_key,
+                      &packet_time_stamp,
+                      packet_layer_3_bytes,
+                      tcp_flags);
             break;
         case IPPROTO_UDP: // UDP protocol
             my_udp = (struct udphdr *) (packet+SIZE_ETHERNET+size_ip); // pointer to the UDP header
@@ -201,19 +237,33 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             packet_key->dst_port = ntohs(my_udp->uh_dport);
 
             // TODO packet_layer_3_bytes
-            find_flow(&(netflow_records->tree), packet_key, packet_layer_3_bytes, tcp_flags);
+            find_flow(&(netflow_records->tree),
+                      packet_key,
+                      &packet_time_stamp,
+                      packet_layer_3_bytes,
+                      tcp_flags);
             break;
         default:
             break;
     }
 
-    free_netflow_key(packet_key);
+    free_netflow_key(&packet_key);
 
     return 0;
 }
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)
 {
+    if (first_flow == NULL)
+    {
+        printf("first flow is NULL\n");
+    }
+
+    if (first_flow == NULL)
+    {
+        printf("first flow is NULL\n");
+    }
+
     if (first_flow->input != second_flow->input)
     {
         return (first_flow->input > second_flow->input) ? 1 : -1;

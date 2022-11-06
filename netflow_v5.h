@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "option.h"
 #include "tree.h"
 
 typedef struct netflow_v5_header* netflow_v5_header_t;
@@ -49,8 +50,8 @@ struct netflow_v5_flow_record
     uint16_t output;
     uint32_t packets;
     uint32_t octets;
-    uint32_t first;
-    uint32_t last;
+    struct timeval first;
+    struct timeval last;
     uint16_t src_port;
     uint16_t dst_port;
     uint8_t pad1;
@@ -82,8 +83,11 @@ struct netflow_recording_system
 
 uint8_t process_packet (netflow_recording_system_t netflow_records,
                         const struct pcap_pkthdr* header,
-                        const u_char* packet);
+                        const u_char* packet,
+                        options_t options);
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
+
+void export_flow (netflow_v5_flow_record_t flow);
 
 #endif // FLOW_NETFLOW_V5_H

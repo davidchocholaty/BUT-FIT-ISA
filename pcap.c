@@ -34,7 +34,8 @@
  * TODO
  */
 void run_packets_processing (netflow_recording_system_t netflow_records,
-                             char* input_stream)
+                             options_t options)
+                             //char* input_stream)
 {
     unsigned int packet_number;
     int return_code;
@@ -42,8 +43,10 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
     const u_char* packet;
     struct pcap_pkthdr* header; // Has to be pointer because of pcap_next_ex
     pcap_t* handle;                 // file/device handler
-
     struct ether_header* eptr;
+
+    char* input_stream = options->analyzed_input_source->file_name;
+
     //struct ip* my_ip;
     //const struct tcphdr* my_tcp;    // pointer to the beginning of TCP header
     //const struct udphdr* my_udp;    // pointer to the beginning of UDP header
@@ -145,7 +148,7 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
         switch (ntohs(eptr->ether_type)){               // see /usr/include/net/ethernet.h for types
             case ETHERTYPE_IP: // IPv4 packet
                 // TODO handle return code
-                process_packet(netflow_records, header, packet);
+                process_packet(netflow_records, header, packet, options);
                 break;
             default:
                 break;
