@@ -194,15 +194,6 @@ void bst_dispose(bst_node_t* tree) {
 
 //------------------------------------------------
 
-void bst_print_node(bst_node_t node) {
-    static int i = 1;
-    printf("tree node with flow: %d\n", i);
-
-    i++;
-
-    node = node;
-}
-
 void bst_export_expired (bst_node_t* tree,
                          struct timeval actual_time_stamp,
                          options_t options)
@@ -211,29 +202,24 @@ void bst_export_expired (bst_node_t* tree,
     {
         bst_export_expired(&((*tree)->left), actual_time_stamp, options);
         bst_export_expired(&((*tree)->right), actual_time_stamp, options);
-/*
+
         if ((actual_time_stamp.tv_sec - (*tree)->value->first.tv_sec) >
             options->active_entries_timeout->timeout_seconds) // Active timer check
         {
             // Flow expired because of active timer.
             export_flow((*tree)->value);
             // Remove tree node.
-            // TODO problem with removing node from tree
-            //bst_delete(tree, (*tree)->key);
-        }*/
-        /*
-        else */if (actual_time_stamp.tv_sec - (*tree)->value->last.tv_sec >
+            bst_delete(tree, (*tree)->key);
+        }
+        else if (actual_time_stamp.tv_sec - (*tree)->value->last.tv_sec >
             options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
         {
             // Flow expired because of inactive timer.
             export_flow((*tree)->value);
             // Remove tree node.
-            // TODO problem with removing node from tree
             bst_delete(tree, (*tree)->key);
         }
 
         // TODO TCP flags etc.
-
-        //bst_print_node(tree);
     }
 }
