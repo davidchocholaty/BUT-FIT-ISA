@@ -28,16 +28,19 @@ void bst_init(bst_node_t* tree) {
 bool bst_search(bst_node_t tree,
                 netflow_v5_key_t key,
                 netflow_v5_flow_record_t *value) {
+    int comparison_status;
+
     if (tree != NULL)
     {
-        // TODO refactorization of function in if
-        if (compare_flows(tree->key, key) == 0)
+        comparison_status = compare_flows(tree->key, key);
+
+        if (comparison_status == 0)
         {
             *value = tree->value;
             return true;
         }
 
-        if (compare_flows(tree->key, key) > 0)
+        if (comparison_status > 0)
         {
             return bst_search(tree->left, key, value);
         }
@@ -52,6 +55,7 @@ uint8_t bst_insert(bst_node_t* tree,
                    netflow_v5_key_t key,
                    netflow_v5_flow_record_t value)
 {
+    int comparison_status;
     uint8_t status = NO_ERROR;
 
     if (*tree == NULL)
@@ -73,13 +77,15 @@ uint8_t bst_insert(bst_node_t* tree,
     }
     else
     {
-        if (compare_flows((*tree)->key, key) > 0)
+        comparison_status = compare_flows((*tree)->key, key);
+
+        if (comparison_status > 0)
         {
             status = bst_insert(&((*tree)->left), key, value);
         }
         else
         {
-            if (compare_flows((*tree)->key, key) < 0)
+            if (comparison_status < 0)
             {
                 status = bst_insert(&((*tree)->right), key, value);
             }
@@ -136,47 +142,51 @@ void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree) {
 
 void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
     bst_node_t tmp;
+    int comparison_status;
 
     if (*tree != NULL)
     {
-        if (compare_flows((*tree)->key, key) > 0)
+        comparison_status = compare_flows((*tree)->key, key);
+
+        if (comparison_status == 0)
         {
-            bst_delete(&((*tree)->left), key);
-        }
-        else
-        {
-            if (compare_flows((*tree)->key, key) < 0)
+            if ((*tree)->left == NULL && (*tree)->right == NULL)
             {
-                bst_delete(&((*tree)->right), key);
+                free_tree_node(tree);
             }
             else
             {
-                if ((*tree)->left == NULL && (*tree)->right == NULL)
+                if ((*tree)->left != NULL && (*tree)->right != NULL)
                 {
-                    free_tree_node(tree);
+                    bst_replace_by_rightmost(*tree, &((*tree)->left));
                 }
                 else
                 {
-                    if ((*tree)->left != NULL && (*tree)->right != NULL)
+                    tmp = *tree;
+
+                    if ((*tree)->left == NULL)
                     {
-                        bst_replace_by_rightmost(*tree, &((*tree)->left));
+                        *tree = (*tree)->right;
                     }
                     else
                     {
-                        tmp = *tree;
-
-                        if ((*tree)->left == NULL)
-                        {
-                            *tree = (*tree)->right;
-                        }
-                        else
-                        {
-                            *tree = (*tree)->left;
-                        }
-
-                        free_tree_node(&tmp);
+                        *tree = (*tree)->left;
                     }
+
+                    free_tree_node(&tmp);
                 }
+            }
+        }
+        else
+        {
+            if (comparison_status > 0)
+            {
+                bst_delete(&((*tree)->left), key);
+            }
+            else
+            {
+                // The comparison_status value is a negative number.
+                bst_delete(&((*tree)->right), key);
             }
         }
     }
