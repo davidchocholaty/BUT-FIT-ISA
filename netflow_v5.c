@@ -45,6 +45,14 @@ void export_flow (netflow_v5_flow_record_t flow)
     i++;
 }
 
+void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records)
+{
+    bst_node_t* tree = &(netflow_records->tree);
+
+    bst_export_all(tree);
+    bst_dispose(tree);
+}
+
 uint8_t find_flow (bst_node_t* flows_tree,
                    netflow_v5_key_t packet_key,
                    const struct timeval* packet_time_stamp,

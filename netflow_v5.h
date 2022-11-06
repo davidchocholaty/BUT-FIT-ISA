@@ -90,4 +90,6 @@ int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
 
 void export_flow (netflow_v5_flow_record_t flow);
 
+void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records);
+
 #endif // FLOW_NETFLOW_V5_H

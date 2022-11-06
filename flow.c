@@ -33,9 +33,7 @@
 uint8_t flow_epilogue (options_t options,
                        netflow_recording_system_t netflow_records)
 {
-    bst_dispose(&(netflow_records->tree));
-
-    // Free options allocated memory.
+    export_all_flows_dispose_tree(netflow_records);
     free_allocated_mem(&options, &netflow_records);
 
     return NO_ERROR;
@@ -85,11 +83,6 @@ int main (int argc, char* argv[])
 
         return EXIT_FAILURE;
     }
-
-
-    // TODO delete
-    // bst_preorder(netflow_records->tree);
-
 
     status = flow_epilogue(options, netflow_records);
 

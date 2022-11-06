@@ -54,4 +54,6 @@ void bst_export_expired (bst_node_t* tree,
                          struct timeval actual_time_stamp,
                          options_t options);
 
+void bst_export_all (bst_node_t* tree);
+
 #endif // FLOW_TREE_H

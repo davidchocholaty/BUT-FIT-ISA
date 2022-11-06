@@ -233,3 +233,14 @@ void bst_export_expired (bst_node_t* tree,
         // TODO TCP flags etc.
     }
 }
+
+void bst_export_all (bst_node_t* tree)
+{
+    if (*tree != NULL)
+    {
+        bst_export_all(&((*tree)->left));
+        bst_export_all(&((*tree)->right));
+
+        export_flow((*tree)->value);
+    }
+}
