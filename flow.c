@@ -31,10 +31,11 @@
  * @return                Status of function processing.
  */
 uint8_t flow_epilogue (options_t options,
-                       netflow_recording_system_t netflow_records)
+                       netflow_recording_system_t netflow_records,
+                       int** socket)
 {
     export_all_flows_dispose_tree(netflow_records);
-    free_allocated_mem(&options, &netflow_records);
+    free_allocated_mem(&options, &netflow_records, socket);
 
     return NO_ERROR;
 }
@@ -58,6 +59,7 @@ int main (int argc, char* argv[])
     options_t options = NULL;
     netflow_recording_system_t netflow_records = NULL;
     uint8_t status = handle_options(argc, argv, &options);
+    int* socket = NULL;
 
     if (status != NO_ERROR)
     {
@@ -69,22 +71,47 @@ int main (int argc, char* argv[])
     if (status != NO_ERROR)
     {
         print_error(MEMORY_HANDLING_ERROR, argv[0]);
-        flow_epilogue(options, netflow_records);
+        flow_epilogue(options, netflow_records, &socket);
 
         return EXIT_FAILURE;
     }
 
+    status = allocate_socket(&socket);
+
+    if (status != NO_ERROR)
+    {
+        print_error(MEMORY_HANDLING_ERROR, argv[0]);
+        flow_epilogue(options, netflow_records, &socket);
+
+        return EXIT_FAILURE;
+    }
+
+    status = connect_socket(socket, options->netflow_collector_source->source);
+
+    if (status != NO_ERROR)
+    {
+        print_error(status, argv[0]);
+        flow_epilogue(options, netflow_records, &socket);
+
+        return EXIT_FAILURE;
+    }
+
+/*
     status = run_exporter(options, netflow_records);
 
     if (status != NO_ERROR)
     {
         print_error(status, argv[0]);
-        flow_epilogue(options, netflow_records);
+        flow_epilogue(options, netflow_records, &socket);
 
         return EXIT_FAILURE;
     }
+*/
 
-    status = flow_epilogue(options, netflow_records);
+
+    disconnect_socket(socket);
+
+    status = flow_epilogue(options, netflow_records, &socket);
 
     if (status != NO_ERROR)
     {

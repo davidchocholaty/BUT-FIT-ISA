@@ -51,4 +51,6 @@ bool in_range (const unsigned int value,
                const unsigned int min,
                const unsigned int max);
 
+uint8_t parse_name_port (char* in_source, char** out_name, char** out_port);
+
 #endif // FLOW_UTIL_H

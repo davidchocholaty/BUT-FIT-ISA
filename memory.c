@@ -110,6 +110,18 @@ uint8_t allocate_string (char** string, size_t characters_number)
     return EXIT_SUCCESS;
 }
 
+uint8_t allocate_socket (int** socket)
+{
+    *socket = (int*) malloc(sizeof(int));
+
+    if (!is_allocated(*socket))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
 {
     *netflow_records =
@@ -208,6 +220,24 @@ void free_tree_node_keep_data (bst_node_t* tree_node)
     }
 }
 
+void free_string (char** string)
+{
+    if (is_allocated(*string))
+    {
+        free(*string);
+        *string = NULL;
+    }
+}
+
+void free_socket (int** socket)
+{
+    if (is_allocated(*socket))
+    {
+        free(*socket);
+        *socket = NULL;
+    }
+}
+
 /*
  * Function for freeing memory which was allocated for the options structure
  * and the substructures.
@@ -259,8 +289,10 @@ void free_recording_system (netflow_recording_system_t* netflow_records)
 }
 
 void free_allocated_mem (options_t* options,
-                         netflow_recording_system_t* netflow_records)
+                         netflow_recording_system_t* netflow_records,
+                         int** socket)
 {
     free_options_mem(options);
     free_recording_system(netflow_records);
+    free_socket(socket);
 }

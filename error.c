@@ -37,6 +37,7 @@ void print_error (uint8_t error, char* program_name)
         "flow-cache size not in range",
         "closing input file error",
         "error while handling memory",
+        "error while handling socket",
         "unknown error"
     };
 

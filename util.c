@@ -15,6 +15,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "error.h"
+#include "memory.h"
 
 /*
  * Function to check if the input string is only from numeric characters.
@@ -84,4 +88,44 @@ bool in_range (const unsigned int value,
                const unsigned int max)
 {
     return ((value - max) * (value - min) <= 0);
+}
+
+uint8_t parse_name_port (char* in_source, char** out_name, char** out_port)
+{
+    uint8_t status;
+    size_t characters_number;
+
+    // Find the last occurrence of ':'.
+    char* delimiter_addr = strrchr(in_source, ':');
+
+    if (delimiter_addr == NULL)
+    {
+        return INVALID_OPTION_ERROR;
+    }
+    else
+    {
+        // Copy with skip of the ':' character in the result.
+        status = allocate_string(out_port, strlen(delimiter_addr + 1));
+
+        if (status != NO_ERROR)
+        {
+            return MEMORY_HANDLING_ERROR;
+        }
+
+        strcpy(*out_port, delimiter_addr + 1);
+
+        // Copy the substring in front of ':'.
+        characters_number = delimiter_addr - in_source + 1;
+        status = allocate_string(out_name, characters_number);
+
+        if (status != NO_ERROR)
+        {
+            return MEMORY_HANDLING_ERROR;
+        }
+
+        strncpy(*out_name, in_source, characters_number - 1);
+        (*out_name)[characters_number - 1] = '\0';
+    }
+
+    return NO_ERROR;
 }

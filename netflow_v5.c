@@ -20,6 +20,9 @@
 #include <pcap.h>
 #include <netinet/ether.h>
 #include <time.h>
+#include <unistd.h>
+
+#include "util.h"
 
 // TODO maybe later delete
 #include <netinet/in.h>
@@ -53,6 +56,160 @@ void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records)
     bst_dispose(tree);
 }
 
+uint8_t connect_socket (int* sock, char* source)
+{
+    struct sockaddr_in server;//, from; // address structures of the server and the client
+    struct hostent *servent;         // network host entry required by gethostbyname()
+
+    uint8_t status = NO_ERROR;
+    char* source_name = NULL;
+    char* source_port = NULL;
+    char* end;
+
+    long int port_numeric;
+
+    status = parse_name_port(source, &source_name, &source_port);
+
+    printf("name: %s\n", source_name);
+    printf("port: %s\n", source_port);
+
+    if (status != NO_ERROR)
+    {
+        return status;
+    }
+
+    memset(&server, 0, sizeof(server)); // erase the server structure
+    server.sin_family = AF_INET;
+
+    // make DNS resolution of the first parameter using gethostbyname()
+
+    // check the first parameter
+    if ((servent = gethostbyname(source_name)) == NULL)
+    {
+        free_string(&source_name);
+        free_string(&source_port);
+
+        return SOCKET_ERROR;
+    }
+
+    // copy the first parameter to the server.sin_addr structure
+    memcpy(&server.sin_addr, servent->h_addr, servent->h_length);
+
+    port_numeric = strtol(source_port, &end, 10);
+
+    if (port_numeric == 0L)
+    {
+        return INVALID_OPTION_ERROR;
+    }
+
+    server.sin_port = htons((uint16_t)port_numeric);        // server port (network byte order)
+
+    //create a client socket
+    if ((*sock = socket(AF_INET , SOCK_DGRAM , 0)) == -1)
+    {
+        return SOCKET_ERROR;
+    }
+
+    printf("* Server socket created\n");
+
+    //len = sizeof(server);
+    //fromlen = sizeof(from);
+
+    printf("* Creating a connected UDP socket using connect()\n");
+    // create a connected UDP socket
+    if (connect(*sock, (struct sockaddr *)&server, sizeof(server))  == -1)
+    {
+        return SOCKET_ERROR;
+    }
+
+    free_string(&source_name);
+    free_string(&source_port);
+
+    return NO_ERROR;
+}
+
+void disconnect_socket (const int* sock)
+{
+    close(*sock);
+    printf("* Closing the client socket ...\n");
+}
+/*
+void send_netflow ()
+{
+    int sock;                        // socket descriptor
+    int msg_size, i;
+    struct sockaddr_in server, from; // address structures of the server and the client
+    struct hostent *servent;         // network host entry required by gethostbyname()
+    socklen_t len, fromlen;
+    char buffer[BUFFER];
+
+    memset(&server,0,sizeof(server)); // erase the server structure
+    server.sin_family = AF_INET;
+
+    // make DNS resolution of the first parameter using gethostbyname()
+    // argv[1] -> address
+    // argv[2] -> port
+    if ((servent = gethostbyname(argv[1])) == NULL) // check the first parameter
+        errx(1,"gethostbyname() failed\n");
+
+    // copy the first parameter to the server.sin_addr structure
+    memcpy(&server.sin_addr,servent->h_addr,servent->h_length);
+
+    server.sin_port = htons(atoi(argv[2]));        // server port (network byte order)
+
+    if ((sock = socket(AF_INET , SOCK_DGRAM , 0)) == -1)   //create a client socket
+        err(1,"socket() failed\n");
+
+    printf("* Server socket created\n");
+
+    len = sizeof(server);
+    fromlen = sizeof(from);
+
+    printf("* Creating a connected UDP socket using connect()\n");
+    // create a connected UDP socket
+    if (connect(sock, (struct sockaddr *)&server, sizeof(server))  == -1)
+        err(1, "connect() failed");
+
+    //send data to the server
+    while((msg_size=read(STDIN_FILENO,buffer,BUFFER)) > 0)
+        // read input data from STDIN (console) until end-of-line (Enter) is pressed
+        // when end-of-file (CTRL-D) is received, n == 0
+    {
+        i = send(sock,buffer,msg_size,0);     // send data to the server
+        if (i == -1)                   // check if data was sent correctly
+            err(1,"send() failed");
+        else if (i != msg_size)
+            err(1,"send(): buffer written partially");
+
+        // obtain the local IP address and port using getsockname()
+        if (getsockname(sock,(struct sockaddr *) &from, &len) == -1)
+            err(1,"getsockname() failed");
+
+        printf("* Data sent from %s, port %d (%d) to %s, port %d (%d)\n",inet_ntoa(from.sin_addr), ntohs(from.sin_port), from.sin_port, inet_ntoa(server.sin_addr),ntohs(server.sin_port), server.sin_port);
+
+        // read the answer from the server
+        if ((i = recv(sock,buffer, BUFFER,0)) == -1)
+            err(1,"recv() failed");
+        else if (i > 0){
+            // obtain the remote IP adddress and port from the server (cf. recfrom())
+            if (getpeername(sock, (struct sockaddr *)&from, &fromlen) != 0)
+                err(1,"getpeername() failed\n");
+
+            printf("* UDP packet received from %s, port %d\n",inet_ntoa(from.sin_addr),ntohs(from.sin_port));
+            printf("%.*s",i,buffer);                   // print the answer
+        }
+    }
+    // reading data until end-of-file (CTRL-D)
+
+    if (msg_size == -1)
+        err(1,"reading failed");
+
+    close(sock);
+    printf("* Closing the client socket ...\n");
+
+    return 0;
+}
+*/
 uint8_t find_flow (bst_node_t* flows_tree,
                    netflow_v5_key_t packet_key,
                    const struct timeval* packet_time_stamp,

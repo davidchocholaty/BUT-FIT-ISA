@@ -92,4 +92,8 @@ void export_flow (netflow_v5_flow_record_t flow);
 
 void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records);
 
+uint8_t connect_socket (int* sock, char* source);
+
+void disconnect_socket (const int* sock);
+
 #endif // FLOW_NETFLOW_V5_H

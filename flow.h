@@ -30,7 +30,8 @@
  * @return                Status of function processing.
  */
 uint8_t flow_epilogue (options_t options,
-                       netflow_recording_system_t netflow_records);
+                       netflow_recording_system_t netflow_records,
+                       int** socket);
 
 /*
  * Main function of Netflow exporter.
