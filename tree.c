@@ -19,6 +19,7 @@
 #include "error.h"
 #include "memory.h"
 #include "netflow_v5.h"
+#include "util.h"
 
 
 void bst_init(bst_node_t* tree) {
@@ -27,7 +28,8 @@ void bst_init(bst_node_t* tree) {
 
 bool bst_search(bst_node_t tree,
                 netflow_v5_key_t key,
-                flow_node_t *value) {
+                flow_node_t *value)
+{
     int comparison_status;
 
     if (tree != NULL)
@@ -212,11 +214,12 @@ void bst_export_expired (netflow_recording_system_t netflow_records,
 {
     if (*tree != NULL)
     {
+        // TODO exportovani od nejstarsiho zaznamu
+
         bst_export_expired(netflow_records, sending_system, &((*tree)->left), actual_time_stamp, options);
         bst_export_expired(netflow_records, sending_system, &((*tree)->right), actual_time_stamp, options);
-
-        if ((actual_time_stamp.tv_sec -
-        (*tree)->value->first->tv_sec) >
+/*
+        if ((actual_time_stamp.tv_sec - (*tree)->value->first->tv_sec) >
             options->active_entries_timeout->timeout_seconds) // Active timer check
         {
             // Flow expired because of active timer.
@@ -225,8 +228,7 @@ void bst_export_expired (netflow_recording_system_t netflow_records,
             bst_delete(tree, (*tree)->key);
         }
 
-        else if (actual_time_stamp.tv_sec -
-        (*tree)->value->last->tv_sec >
+        else if (actual_time_stamp.tv_sec - (*tree)->value->last->tv_sec >
             options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
         {
             // Flow expired because of inactive timer.
@@ -234,20 +236,81 @@ void bst_export_expired (netflow_recording_system_t netflow_records,
             // Remove tree node.
             bst_delete(tree, (*tree)->key);
         }
-
+*/
         // TODO TCP flags etc.
     }
+}
+
+// https://stackoverflow.com/questions/11728191/how-to-create-a-function-that-returns-smallest-value-of-an-unordered-binary-tree
+//struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
+struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
+{
+    struct timeval* time = NULL;
+    struct timeval* compare_node_time = NULL;
+    bst_node_t compare_node;
+
+    if (*tree != NULL)
+    {
+        time = (*tree)->value->first;
+
+        compare_node = (*tree)->left;
+
+        if (compare_node != NULL)
+        {
+            compare_node_time = bst_find_oldest(&(compare_node), oldest_node);
+
+            if (compare_timeval(compare_node_time, time) < 0)
+            {
+                // Left node has smaller time.
+                time = compare_node_time;
+                *oldest_node = (*tree)->left;
+            }
+        }
+
+        compare_node = (*tree)->right;
+
+        if (compare_node != NULL)
+        {
+            compare_node_time = bst_find_oldest(&(compare_node), oldest_node);
+
+            if (compare_timeval(compare_node_time, time) < 0)
+            {
+                // Right node has smaller time.
+                time = compare_node_time;
+                *oldest_node = (*tree)->right;
+            }
+        }
+    }
+
+    return time;
 }
 
 void bst_export_all (netflow_recording_system_t netflow_records,
                      netflow_sending_system_t sending_system,
                      bst_node_t* tree)
 {
+    bst_node_t oldest_node;
+
+    while (*tree != NULL)
+    {
+        oldest_node = *tree;
+        bst_find_oldest(tree, &oldest_node);
+
+        printf("oldest packet time values: %ld %ld\n", oldest_node->value->first->tv_sec, oldest_node->value->first->tv_usec);
+
+        export_flow(netflow_records,
+                    sending_system,
+                    oldest_node->value);
+        bst_delete(tree, oldest_node->key);
+    }
+/*
     if (*tree != NULL)
     {
         bst_export_all(netflow_records, sending_system, &((*tree)->left));
         bst_export_all(netflow_records, sending_system, &((*tree)->right));
 
-        export_flow(netflow_records, sending_system, (*tree)->value);
+        export_flow(netflow_records, sending_system,  (*tree)->value);
     }
+*/
+
 }

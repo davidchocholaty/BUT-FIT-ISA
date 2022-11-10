@@ -61,4 +61,6 @@ void bst_export_all (struct netflow_recording_system* netflow_records,
                      struct netflow_sending_system* sending_system,
                      bst_node_t* tree);
 
+struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node);
+
 #endif // FLOW_TREE_H

@@ -46,7 +46,7 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
                      netflow_sending_system_t sending_system,
                      flow_node_t flow_export)
 {
-    static uint64_t flow_sequence_number = 0;
+    static uint32_t flow_sequence_number = 0;
     const uint16_t version = 5;
     const uint16_t flows_count = 1;
     size_t offset;
@@ -68,7 +68,8 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
     header->unix_secs = htonl(netflow_records->last_packet_time->tv_sec);
     header->unix_nsecs = htonl(netflow_records->last_packet_time->tv_usec * 1000);
     header->flow_sequence = htonl(flow_sequence_number);
-    header->sampling_interval = htons(0x01 << 14);
+
+    // header->sampling_interval = htons(0x01 << 14);
     // header->engine_type and header->engine_id are left zero.
 
     offset = sizeof(*header);
@@ -115,9 +116,9 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
 */
 
 
-    static int i = 1;
-    printf("exporting flow %d\n", i);
-    i++;
+    //static int i = 1;
+    //printf("exporting flow %d\n", i);
+    //i++;
 
     flow_sequence_number++;
 
@@ -132,7 +133,7 @@ void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
     if (tree != NULL)
     {
         bst_export_all(netflow_records , sending_system, tree);
-        bst_dispose(tree);
+        //bst_dispose(tree);
     }
 }
 
@@ -321,7 +322,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
                         const u_char* packet,
                         options_t options)
 {
-    static uint64_t packet_number = 0;
+    static bool first_packet = true;
 
     struct ip* my_ip = NULL;
     const struct tcphdr* my_tcp = NULL;    // pointer to the beginning of TCP header
@@ -334,13 +335,13 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
     // Time stamp of an actual received packet
     struct timeval packet_time_stamp = header->ts;
 
-    printf("packet number: %lu\n", packet_number);
-
-    if (packet_number == 0)
+    if (first_packet)
     {
         memcpy(netflow_records->first_packet_time,
                &packet_time_stamp,
                sizeof(*(netflow_records->first_packet_time)));
+
+        first_packet = false;
     }
 
     memcpy(netflow_records->last_packet_time,
@@ -356,7 +357,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     // Check timers with actual packet timestamp value
     // and export the expired flows.
-    bst_export_expired(netflow_records , sending_system, &(netflow_records->tree), packet_time_stamp, options);
+    bst_export_expired(netflow_records, sending_system, &(netflow_records->tree), packet_time_stamp, options);
 
     status = allocate_netflow_key(&packet_key);
 
@@ -425,13 +426,13 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     free_netflow_key(&packet_key);
 
-    packet_number++;
-
     return NO_ERROR;
 }
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)
 {
+    int return_code;
+
     if (first_flow == NULL)
     {
         printf("first flow is NULL\n");
@@ -447,14 +448,22 @@ int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)
         return (first_flow->input > second_flow->input) ? 1 : -1;
     }
 
-    if (first_flow->src_addr != second_flow->src_addr)
+    return_code = memcmp(&(first_flow->src_addr),
+                         &(second_flow->src_addr),
+                         sizeof(first_flow->src_addr));
+
+    if (return_code != 0)
     {
-        return (first_flow->src_addr > second_flow->src_addr) ? 1 : -1;
+        return (return_code > 0) ? 1 : -1;
     }
 
-    if (first_flow->dst_addr != second_flow->dst_addr)
+    return_code = memcmp(&(first_flow->dst_addr),
+                         &(second_flow->dst_addr),
+                         sizeof(first_flow->dst_addr));
+
+    if (return_code != 0)
     {
-        return (first_flow->dst_addr > second_flow->dst_addr) ? 1 : -1;
+        return (return_code > 0) ? 1 : -1;
     }
 
     if (first_flow->prot != second_flow->prot)

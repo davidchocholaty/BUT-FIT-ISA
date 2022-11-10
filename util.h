@@ -55,4 +55,6 @@ uint8_t parse_name_port (char* in_source, char** out_name, char** out_port);
 
 u_int32_t get_timeval_ms(struct timeval* time, struct timeval* first_packet_time);
 
+int compare_timeval (struct timeval* first_time, struct timeval* second_time);
+
 #endif // FLOW_UTIL_H
