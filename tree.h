@@ -22,6 +22,7 @@
 
 struct netflow_v5_key; // Forward declaration
 struct netflow_v5_flow_record; // Forward declaration
+struct netflow_sending_system; // Forward declaration
 
 typedef struct bst_node* bst_node_t;
 
@@ -51,9 +52,11 @@ void bst_dispose(bst_node_t* tree);
 void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree);
 
 void bst_export_expired (bst_node_t* tree,
+                         struct netflow_sending_system* sending_system,
                          struct timeval actual_time_stamp,
                          options_t options);
 
-void bst_export_all (bst_node_t* tree);
+void bst_export_all (bst_node_t* tree,
+                     struct netflow_sending_system* sending_system);
 
 #endif // FLOW_TREE_H

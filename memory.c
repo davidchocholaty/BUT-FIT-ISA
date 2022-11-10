@@ -132,6 +132,26 @@ uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
         return EXIT_FAILURE;
     }
 
+    (*netflow_records)->tree = NULL;
+
+    return EXIT_SUCCESS;
+}
+
+uint8_t allocate_sending_system (netflow_sending_system_t* sending_system)
+{
+    *sending_system =
+            (netflow_sending_system_t) malloc(sizeof(struct netflow_sending_system));
+
+    if (!is_allocated(*sending_system))
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (allocate_socket(&((*sending_system)->socket)) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }
 
@@ -288,11 +308,25 @@ void free_recording_system (netflow_recording_system_t* netflow_records)
     }
 }
 
+void free_sending_system (netflow_sending_system_t* sending_system)
+{
+    if (is_allocated(*sending_system))
+    {
+        if (is_allocated((*sending_system)->socket))
+        {
+            free_socket(&((*sending_system)->socket));
+        }
+
+        free(*sending_system);
+        *sending_system = NULL;
+    }
+}
+
 void free_allocated_mem (options_t* options,
                          netflow_recording_system_t* netflow_records,
-                         int** socket)
+                         netflow_sending_system_t* sending_system)
 {
     free_options_mem(options);
     free_recording_system(netflow_records);
-    free_socket(socket);
+    free_sending_system(sending_system);
 }

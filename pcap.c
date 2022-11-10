@@ -34,6 +34,7 @@
  * TODO
  */
 void run_packets_processing (netflow_recording_system_t netflow_records,
+                             netflow_sending_system_t sending_system,
                              options_t options)
                              //char* input_stream)
 {
@@ -148,7 +149,7 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
         switch (ntohs(eptr->ether_type)){               // see /usr/include/net/ethernet.h for types
             case ETHERTYPE_IP: // IPv4 packet
                 // TODO handle return code
-                process_packet(netflow_records, header, packet, options);
+                process_packet(netflow_records, sending_system, header, packet, options);
                 break;
             default:
                 break;

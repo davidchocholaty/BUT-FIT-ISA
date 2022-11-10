@@ -25,6 +25,7 @@ typedef struct netflow_v5_header* netflow_v5_header_t;
 typedef struct netflow_v5_flow_record* netflow_v5_flow_record_t;
 typedef struct netflow_v5_key* netflow_v5_key_t;
 typedef struct netflow_recording_system* netflow_recording_system_t;
+typedef struct netflow_sending_system* netflow_sending_system_t;
 
 struct bst_node; // Forward declaration
 
@@ -81,16 +82,24 @@ struct netflow_recording_system
     struct bst_node* tree;
 };
 
+struct netflow_sending_system
+{
+    int* socket;
+};
+
 uint8_t process_packet (netflow_recording_system_t netflow_records,
+                        netflow_sending_system_t sending_system,
                         const struct pcap_pkthdr* header,
                         const u_char* packet,
                         options_t options);
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
 
-void export_flow (netflow_v5_flow_record_t flow);
+void export_flow (netflow_v5_flow_record_t flow_export,
+                  netflow_sending_system_t sending_system);
 
-void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records);
+void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
+                                    netflow_sending_system_t sending_system);
 
 uint8_t connect_socket (int* sock, char* source);
 

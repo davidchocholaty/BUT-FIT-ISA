@@ -205,19 +205,20 @@ void bst_dispose(bst_node_t* tree) {
 //------------------------------------------------
 
 void bst_export_expired (bst_node_t* tree,
+                         netflow_sending_system_t sending_system,
                          struct timeval actual_time_stamp,
                          options_t options)
 {
     if (*tree != NULL)
     {
-        bst_export_expired(&((*tree)->left), actual_time_stamp, options);
-        bst_export_expired(&((*tree)->right), actual_time_stamp, options);
+        bst_export_expired(&((*tree)->left), sending_system, actual_time_stamp, options);
+        bst_export_expired(&((*tree)->right), sending_system, actual_time_stamp, options);
 
         if ((actual_time_stamp.tv_sec - (*tree)->value->first.tv_sec) >
             options->active_entries_timeout->timeout_seconds) // Active timer check
         {
             // Flow expired because of active timer.
-            export_flow((*tree)->value);
+            export_flow((*tree)->value, sending_system);
             // Remove tree node.
             bst_delete(tree, (*tree)->key);
         }
@@ -225,7 +226,7 @@ void bst_export_expired (bst_node_t* tree,
             options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
         {
             // Flow expired because of inactive timer.
-            export_flow((*tree)->value);
+            export_flow((*tree)->value, sending_system);
             // Remove tree node.
             bst_delete(tree, (*tree)->key);
         }
@@ -234,13 +235,14 @@ void bst_export_expired (bst_node_t* tree,
     }
 }
 
-void bst_export_all (bst_node_t* tree)
+void bst_export_all (bst_node_t* tree,
+                     netflow_sending_system_t sending_system)
 {
     if (*tree != NULL)
     {
-        bst_export_all(&((*tree)->left));
-        bst_export_all(&((*tree)->right));
+        bst_export_all(&((*tree)->left), sending_system);
+        bst_export_all(&((*tree)->right), sending_system);
 
-        export_flow((*tree)->value);
+        export_flow((*tree)->value, sending_system);
     }
 }

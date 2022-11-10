@@ -39,21 +39,83 @@
 #include "tree.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
+#define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
+                         sizeof(struct netflow_v5_flow_record))
 
-void export_flow (netflow_v5_flow_record_t flow)
+void export_flow (netflow_v5_flow_record_t flow_export,
+                  netflow_sending_system_t sending_system)
 {
+    const uint16_t version = 5;
+    const uint16_t flows_count = 1;
+    int offset;
+    uint8_t packet[MAX_PACKET_SIZE];
+    netflow_v5_header_t header;
+    netflow_v5_flow_record_t flow_record;
+
+    memset (&packet, '\0', sizeof (packet));
+
+    header = (netflow_v5_header_t) packet;
+
+    header->version = htons(version);
+    header->count = htons(flows_count);
+    // header->sysuptime_ms // TODO
+    // header->unix_secs = // TODO
+    // header->unix_nsecs = // TODO
+    // header->flow_sequence = // TODO
+    header->sampling_interval = htons(0x01 << 14);
+    // header->engine_type and header->engine_id are left zero.
+
+    offset = sizeof(*header);
+
+    flow_record = (netflow_v5_flow_record_t) (packet + offset);
+
+    flow_record->src_addr = flow_export->src_addr;
+    flow_record->dst_addr = flow_export->dst_addr;
+    flow_record->packets = flow_export->packets;
+    flow_record->octets = htonl(flow_export->octets);
+    // TODO first
+    // TODO last
+    flow_record->src_port = flow_export->src_port;
+    flow_record->dst_port = flow_export->dst_port;
+    flow_record->tcp_flags = flow_export->tcp_flags;
+    flow_record->prot = flow_export->prot;
+    flow_record->tos = flow_export->tos;
+    // The rest of values are left zero.
+
+
+    // Send packet
+
+    // TODO smazat
+    sending_system = sending_system;
+
+/*
+    i = send(sock,buffer,msg_size,0);     // send data to the server
+    if (i == -1)                   // check if data was sent correctly
+        err(1,"send() failed");
+    else if (i != msg_size)
+        err(1,"send(): buffer written partially");
+
+    // read the answer from the server
+    if ((i = recv(sock,buffer, BUFFER,0)) == -1)
+        err(1,"recv() failed");
+*/
+
     static int i = 1;
-    flow->tos = flow->tos;
+    flow_export->tos = flow_export->tos;
     printf("exporting flow %d\n", i);
     i++;
 }
 
-void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records)
+void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
+                                    netflow_sending_system_t sending_system)
 {
     bst_node_t* tree = &(netflow_records->tree);
 
-    bst_export_all(tree);
-    bst_dispose(tree);
+    if (tree != NULL)
+    {
+        bst_export_all(tree, sending_system);
+        bst_dispose(tree);
+    }
 }
 
 uint8_t connect_socket (int* sock, char* source)
@@ -326,6 +388,7 @@ uint8_t find_flow (bst_node_t* flows_tree,
 }
 
 uint8_t process_packet (netflow_recording_system_t netflow_records,
+                        netflow_sending_system_t sending_system,
                         const struct pcap_pkthdr* header,
                         const u_char* packet,
                         options_t options)
@@ -348,7 +411,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 */
     // Check timers with actual packet timestamp value
     // and export the expired flows.
-    bst_export_expired(&(netflow_records->tree), packet_time_stamp, options);
+    bst_export_expired(&(netflow_records->tree), sending_system, packet_time_stamp, options);
 
     status = allocate_netflow_key(&packet_key);
 

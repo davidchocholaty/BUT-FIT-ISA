@@ -31,7 +31,7 @@
  */
 uint8_t flow_epilogue (options_t options,
                        netflow_recording_system_t netflow_records,
-                       int** socket);
+                       netflow_sending_system_t sending_system);
 
 /*
  * Main function of Netflow exporter.
