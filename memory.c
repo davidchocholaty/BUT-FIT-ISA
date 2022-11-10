@@ -155,10 +155,10 @@ uint8_t allocate_sending_system (netflow_sending_system_t* sending_system)
     return EXIT_SUCCESS;
 }
 
-uint8_t allocate_netflow_record (netflow_v5_flow_record_t* flow_record)
+uint8_t allocate_netflow_record (flow_node_t* flow_record)
 {
     *flow_record =
-            (netflow_v5_flow_record_t) malloc(sizeof(struct netflow_v5_flow_record));
+            (flow_node_t) malloc(sizeof(struct flow_node));
 
     if (!is_allocated(*flow_record))
     {
@@ -194,7 +194,7 @@ uint8_t allocate_tree_node (bst_node_t* tree_node)
     return EXIT_SUCCESS;
 }
 
-void free_netflow_record (netflow_v5_flow_record_t* flow_record)
+void free_netflow_record (flow_node_t* flow_record)
 {
     if (is_allocated(*flow_record))
     {

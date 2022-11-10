@@ -21,7 +21,7 @@
 #include "option.h"
 
 struct netflow_v5_key; // Forward declaration
-struct netflow_v5_flow_record; // Forward declaration
+struct flow_node; // Forward declaration
 struct netflow_sending_system; // Forward declaration
 
 typedef struct bst_node* bst_node_t;
@@ -29,7 +29,7 @@ typedef struct bst_node* bst_node_t;
 struct bst_node
 {
     struct netflow_v5_key* key;
-    struct netflow_v5_flow_record* value;
+    struct flow_node* value;
     struct bst_node* left;
     struct bst_node* right;
 };
@@ -38,11 +38,11 @@ void bst_init(bst_node_t* tree);
 
 bool bst_search(bst_node_t tree,
                 struct netflow_v5_key* key,
-                struct netflow_v5_flow_record** value);
+                struct flow_node** value);
 
 uint8_t bst_insert(bst_node_t* tree,
                    struct netflow_v5_key* key,
-                   struct netflow_v5_flow_record* value);
+                   struct flow_node* value);
 
 void bst_delete(bst_node_t* tree, struct netflow_v5_key* key);
 

@@ -27,7 +27,7 @@ void bst_init(bst_node_t* tree) {
 
 bool bst_search(bst_node_t tree,
                 netflow_v5_key_t key,
-                netflow_v5_flow_record_t *value) {
+                flow_node_t *value) {
     int comparison_status;
 
     if (tree != NULL)
@@ -53,7 +53,7 @@ bool bst_search(bst_node_t tree,
 
 uint8_t bst_insert(bst_node_t* tree,
                    netflow_v5_key_t key,
-                   netflow_v5_flow_record_t value)
+                   flow_node_t value)
 {
     int comparison_status;
     uint8_t status = NO_ERROR;

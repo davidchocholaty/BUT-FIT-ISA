@@ -41,9 +41,9 @@
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
 #define MAX_BUFFER_SIZE 1024                // buffer length
 #define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
-                         sizeof(struct netflow_v5_flow_record))
+                         sizeof(struct flow_node))
 
-uint8_t export_flow (netflow_v5_flow_record_t flow_export,
+uint8_t export_flow (flow_node_t flow_export,
                      netflow_sending_system_t sending_system)
 {
     const uint16_t version = 5;
@@ -65,7 +65,7 @@ uint8_t export_flow (netflow_v5_flow_record_t flow_export,
     // header->unix_secs = // TODO
     // header->unix_nsecs = // TODO
     // header->flow_sequence = // TODO
-    header->sampling_interval = htons(0x01 << 14);
+    header->sampling_interval = htons(0x01 << 14); // TODO
     // header->engine_type and header->engine_id are left zero.
 
     offset = sizeof(*header);
@@ -85,20 +85,14 @@ uint8_t export_flow (netflow_v5_flow_record_t flow_export,
     flow_record->tos = flow_export->tos;
     // The rest of values are left zero.
 
-
     packet_size = offset + sizeof(*flow_record);
 
     // Send packet
     return_code = send(*(sending_system->socket), packet, packet_size, 0);
 
-    if (return_code == -1)
+    if (return_code == -1 || (size_t)return_code != packet_size)
     {
         // Send failed.
-        return PACKET_SENDING_ERROR;
-    }
-    else if ((size_t)return_code != packet_size)
-    {
-        // Buffer written partially.
         return PACKET_SENDING_ERROR;
     }
 
@@ -297,7 +291,7 @@ uint8_t find_flow (bst_node_t* flows_tree,
                    const uint8_t packet_tcp_flags)
 {
     uint8_t status = NO_ERROR;
-    netflow_v5_flow_record_t flow = NULL;
+    flow_node_t flow = NULL;
 
     //----------------------------------------------
     //static int p = 1;
@@ -320,7 +314,7 @@ uint8_t find_flow (bst_node_t* flows_tree,
         //i++;
         //----------------------------------------------
 
-        netflow_v5_flow_record_t new_flow = NULL;
+        flow_node_t new_flow = NULL;
         netflow_v5_key_t new_key = NULL;
 
         status = allocate_netflow_key(&new_key);
@@ -358,29 +352,15 @@ uint8_t find_flow (bst_node_t* flows_tree,
         new_flow->dst_port = packet_key->dst_port;
 
         new_flow->prot = packet_key->prot;
+
         new_flow->tos = packet_key->tos;
 
         new_flow->tcp_flags |= packet_tcp_flags;
         // TODO later expiration because TH_RST or TH_FIN
 
-
-        // Unknown set as zero.
-        new_flow->nexthop = 0;
-        new_flow->input = 0;
-        new_flow->output = 0;
-        new_flow->src_as = 0;
-        new_flow->dst_as = 0;
-        new_flow->pad1 = 0;
-        new_flow->pad2 = 0;
-
-
         // Set other specific values.
         new_flow->packets = 1;
         new_flow->octets = packet_layer_3_bytes;
-
-        // TODO masks
-        new_flow->src_mask = 0;
-        new_flow->dst_mask = 0;
 
         memcpy(&(new_flow->first), packet_time_stamp, sizeof(new_flow->first));
         memcpy(&(new_flow->last), packet_time_stamp, sizeof(new_flow->last));
