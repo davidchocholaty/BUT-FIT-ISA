@@ -59,7 +59,7 @@ bool is_allocated (void* ptr);
 
 uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records);
 uint8_t allocate_sending_system (netflow_sending_system_t* sending_system);
-uint8_t allocate_netflow_record (flow_node_t* flow_record);
+uint8_t allocate_flow_node (flow_node_t* flow_record);
 uint8_t allocate_netflow_key (netflow_v5_key_t* flow_key);
 uint8_t allocate_tree_node (bst_node_t* tree);
 void free_allocated_mem (options_t* options,
@@ -67,7 +67,7 @@ void free_allocated_mem (options_t* options,
                          netflow_sending_system_t* sending_system);
 void free_recording_system (netflow_recording_system_t* netflow_records);
 void free_sending_system (netflow_sending_system_t* sending_system);
-void free_netflow_record (flow_node_t* flow_record);
+void free_flow_node (flow_node_t* flow_record);
 
 void free_netflow_key (netflow_v5_key_t* flow_key);
 void free_tree_node (bst_node_t* tree_node);

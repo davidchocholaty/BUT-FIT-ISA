@@ -39,13 +39,14 @@
 #include "tree.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
-#define MAX_BUFFER_SIZE 1024                // buffer length
 #define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
                          sizeof(struct flow_node))
 
-uint8_t export_flow (flow_node_t flow_export,
-                     netflow_sending_system_t sending_system)
+uint8_t export_flow (netflow_recording_system_t netflow_records,
+                     netflow_sending_system_t sending_system,
+                     flow_node_t flow_export)
 {
+    static uint64_t flow_sequence_number = 0;
     const uint16_t version = 5;
     const uint16_t flows_count = 1;
     size_t offset;
@@ -55,17 +56,19 @@ uint8_t export_flow (flow_node_t flow_export,
     netflow_v5_header_t header;
     netflow_v5_flow_record_t flow_record;
 
-    memset (&packet, '\0', sizeof (packet));
+    memset (&packet, '\0', sizeof(packet));
 
     header = (netflow_v5_header_t) packet;
 
     header->version = htons(version);
     header->count = htons(flows_count);
-    // header->sysuptime_ms // TODO
-    // header->unix_secs = // TODO
-    // header->unix_nsecs = // TODO
-    // header->flow_sequence = // TODO
-    header->sampling_interval = htons(0x01 << 14); // TODO
+    // TODO fix time difference in one
+    header->sysuptime_ms = htonl(get_timeval_ms(netflow_records->last_packet_time,
+                                                netflow_records->first_packet_time));
+    header->unix_secs = htonl(netflow_records->last_packet_time->tv_sec);
+    header->unix_nsecs = htonl(netflow_records->last_packet_time->tv_usec * 1000);
+    header->flow_sequence = htonl(flow_sequence_number);
+    header->sampling_interval = htons(0x01 << 14);
     // header->engine_type and header->engine_id are left zero.
 
     offset = sizeof(*header);
@@ -74,10 +77,14 @@ uint8_t export_flow (flow_node_t flow_export,
 
     flow_record->src_addr = flow_export->src_addr;
     flow_record->dst_addr = flow_export->dst_addr;
-    flow_record->packets = flow_export->packets;
+    flow_record->packets = htonl(flow_export->packets);
     flow_record->octets = htonl(flow_export->octets);
-    // TODO first
-    // TODO last
+
+    flow_record->first = htonl(get_timeval_ms(flow_export->first,
+                                              netflow_records->first_packet_time));
+    flow_record->last = htonl(get_timeval_ms(flow_export->last,
+                                             netflow_records->first_packet_time));
+
     flow_record->src_port = flow_export->src_port;
     flow_record->dst_port = flow_export->dst_port;
     flow_record->tcp_flags = flow_export->tcp_flags;
@@ -112,6 +119,8 @@ uint8_t export_flow (flow_node_t flow_export,
     printf("exporting flow %d\n", i);
     i++;
 
+    flow_sequence_number++;
+
     return NO_ERROR;
 }
 
@@ -122,7 +131,7 @@ void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
 
     if (tree != NULL)
     {
-        bst_export_all(tree, sending_system);
+        bst_export_all(netflow_records , sending_system, tree);
         bst_dispose(tree);
     }
 }
@@ -207,83 +216,7 @@ void disconnect_socket (const int* sock)
     close(*sock);
     printf("* Closing the client socket ...\n");
 }
-/*
-void send_netflow ()
-{
-    int sock;                        // socket descriptor
-    int msg_size, i;
-    struct sockaddr_in server, from; // address structures of the server and the client
-    struct hostent *servent;         // network host entry required by gethostbyname()
-    socklen_t len, fromlen;
-    char buffer[BUFFER];
 
-    memset(&server,0,sizeof(server)); // erase the server structure
-    server.sin_family = AF_INET;
-
-    // make DNS resolution of the first parameter using gethostbyname()
-    // argv[1] -> address
-    // argv[2] -> port
-    if ((servent = gethostbyname(argv[1])) == NULL) // check the first parameter
-        errx(1,"gethostbyname() failed\n");
-
-    // copy the first parameter to the server.sin_addr structure
-    memcpy(&server.sin_addr,servent->h_addr,servent->h_length);
-
-    server.sin_port = htons(atoi(argv[2]));        // server port (network byte order)
-
-    if ((sock = socket(AF_INET , SOCK_DGRAM , 0)) == -1)   //create a client socket
-        err(1,"socket() failed\n");
-
-    printf("* Server socket created\n");
-
-    len = sizeof(server);
-    fromlen = sizeof(from);
-
-    printf("* Creating a connected UDP socket using connect()\n");
-    // create a connected UDP socket
-    if (connect(sock, (struct sockaddr *)&server, sizeof(server))  == -1)
-        err(1, "connect() failed");
-
-    //send data to the server
-    while((msg_size=read(STDIN_FILENO,buffer,BUFFER)) > 0)
-        // read input data from STDIN (console) until end-of-line (Enter) is pressed
-        // when end-of-file (CTRL-D) is received, n == 0
-    {
-        i = send(sock,buffer,msg_size,0);     // send data to the server
-        if (i == -1)                   // check if data was sent correctly
-            err(1,"send() failed");
-        else if (i != msg_size)
-            err(1,"send(): buffer written partially");
-
-        // obtain the local IP address and port using getsockname()
-        if (getsockname(sock,(struct sockaddr *) &from, &len) == -1)
-            err(1,"getsockname() failed");
-
-        printf("* Data sent from %s, port %d (%d) to %s, port %d (%d)\n",inet_ntoa(from.sin_addr), ntohs(from.sin_port), from.sin_port, inet_ntoa(server.sin_addr),ntohs(server.sin_port), server.sin_port);
-
-        // read the answer from the server
-        if ((i = recv(sock,buffer, BUFFER,0)) == -1)
-            err(1,"recv() failed");
-        else if (i > 0){
-            // obtain the remote IP adddress and port from the server (cf. recfrom())
-            if (getpeername(sock, (struct sockaddr *)&from, &fromlen) != 0)
-                err(1,"getpeername() failed\n");
-
-            printf("* UDP packet received from %s, port %d\n",inet_ntoa(from.sin_addr),ntohs(from.sin_port));
-            printf("%.*s",i,buffer);                   // print the answer
-        }
-    }
-    // reading data until end-of-file (CTRL-D)
-
-    if (msg_size == -1)
-        err(1,"reading failed");
-
-    close(sock);
-    printf("* Closing the client socket ...\n");
-
-    return 0;
-}
-*/
 uint8_t find_flow (bst_node_t* flows_tree,
                    netflow_v5_key_t packet_key,
                    const struct timeval* packet_time_stamp,
@@ -324,7 +257,7 @@ uint8_t find_flow (bst_node_t* flows_tree,
             return MEMORY_HANDLING_ERROR;
         }
 
-        status = allocate_netflow_record(&new_flow);
+        status = allocate_flow_node(&new_flow);
 
         if (status != EXIT_SUCCESS)
         {
@@ -362,8 +295,8 @@ uint8_t find_flow (bst_node_t* flows_tree,
         new_flow->packets = 1;
         new_flow->octets = packet_layer_3_bytes;
 
-        memcpy(&(new_flow->first), packet_time_stamp, sizeof(new_flow->first));
-        memcpy(&(new_flow->last), packet_time_stamp, sizeof(new_flow->last));
+        memcpy(new_flow->first, packet_time_stamp, sizeof(*(new_flow->first)));
+        memcpy(new_flow->last, packet_time_stamp, sizeof(*(new_flow->last)));
 
         // Add flow into the flows tree.
         status = bst_insert(flows_tree, new_key, new_flow);
@@ -373,10 +306,10 @@ uint8_t find_flow (bst_node_t* flows_tree,
         // Matching flow does was found.
         // Update flow record.
         flow->packets += 1;
-        flow->octets += flow->octets + packet_layer_3_bytes;
+        flow->octets += packet_layer_3_bytes;
         flow->tcp_flags |= packet_tcp_flags;
 
-        memcpy(&(flow->last), packet_time_stamp, sizeof(flow->last));
+        memcpy(flow->last, packet_time_stamp, sizeof(*(flow->last)));
     }
 
     return status;
@@ -388,6 +321,8 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
                         const u_char* packet,
                         options_t options)
 {
+    static uint64_t packet_number = 0;
+
     struct ip* my_ip = NULL;
     const struct tcphdr* my_tcp = NULL;    // pointer to the beginning of TCP header
     const struct udphdr* my_udp = NULL;    // pointer to the beginning of UDP header
@@ -398,6 +333,20 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
     uint16_t packet_layer_3_bytes = header->len - SIZE_ETHERNET;
     // Time stamp of an actual received packet
     struct timeval packet_time_stamp = header->ts;
+
+    printf("packet number: %lu\n", packet_number);
+
+    if (packet_number == 0)
+    {
+        memcpy(netflow_records->first_packet_time,
+               &packet_time_stamp,
+               sizeof(*(netflow_records->first_packet_time)));
+    }
+
+    memcpy(netflow_records->last_packet_time,
+           &packet_time_stamp,
+           sizeof(*(netflow_records->last_packet_time)));
+
 /*
     if (netflow_records->tree == NULL)
     {
@@ -407,7 +356,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     // Check timers with actual packet timestamp value
     // and export the expired flows.
-    bst_export_expired(&(netflow_records->tree), sending_system, packet_time_stamp, options);
+    bst_export_expired(netflow_records , sending_system, &(netflow_records->tree), packet_time_stamp, options);
 
     status = allocate_netflow_key(&packet_key);
 
@@ -476,7 +425,9 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     free_netflow_key(&packet_key);
 
-    return 0;
+    packet_number++;
+
+    return NO_ERROR;
 }
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)

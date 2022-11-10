@@ -138,3 +138,19 @@ uint8_t parse_name_port (char* in_source, char** out_name, char** out_port)
 
     return NO_ERROR;
 }
+
+u_int32_t get_timeval_ms(struct timeval* time, struct timeval* first_packet_time)
+{
+    struct timeval result_time;
+
+    result_time.tv_sec = time->tv_sec - first_packet_time->tv_sec;
+    result_time.tv_usec = time->tv_usec - first_packet_time->tv_usec;
+
+    if (result_time.tv_usec < 0)
+    {
+        result_time.tv_usec += 1000000L;
+        result_time.tv_sec--;
+    }
+
+    return ((uint32_t) result_time.tv_sec * 1000 + (uint32_t) result_time.tv_usec / 1000);
+}

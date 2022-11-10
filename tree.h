@@ -21,7 +21,7 @@
 #include "option.h"
 
 struct netflow_v5_key; // Forward declaration
-struct flow_node; // Forward declaration
+struct netflow_recording_system; // Forward declaration
 struct netflow_sending_system; // Forward declaration
 
 typedef struct bst_node* bst_node_t;
@@ -51,12 +51,14 @@ void bst_dispose(bst_node_t* tree);
 
 void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree);
 
-void bst_export_expired (bst_node_t* tree,
+void bst_export_expired (struct netflow_recording_system* netflow_records,
                          struct netflow_sending_system* sending_system,
+                         bst_node_t* tree,
                          struct timeval actual_time_stamp,
                          options_t options);
 
-void bst_export_all (bst_node_t* tree,
-                     struct netflow_sending_system* sending_system);
+void bst_export_all (struct netflow_recording_system* netflow_records,
+                     struct netflow_sending_system* sending_system,
+                     bst_node_t* tree);
 
 #endif // FLOW_TREE_H

@@ -22,9 +22,9 @@
 #include "tree.h"
 
 typedef struct netflow_v5_header* netflow_v5_header_t;
-typedef struct flow_node* flow_node_t;
 typedef struct netflow_v5_flow_record* netflow_v5_flow_record_t;
 typedef struct netflow_v5_key* netflow_v5_key_t;
+typedef struct flow_node* flow_node_t;
 typedef struct netflow_recording_system* netflow_recording_system_t;
 typedef struct netflow_sending_system* netflow_sending_system_t;
 
@@ -41,21 +41,6 @@ struct netflow_v5_header
     uint8_t engine_type;
     uint8_t engine_id;
     uint16_t sampling_interval;
-};
-
-struct flow_node
-{
-    uint32_t src_addr;
-    uint32_t dst_addr;
-    uint32_t packets;
-    uint32_t octets;
-    struct timeval first;
-    struct timeval last;
-    uint16_t src_port;
-    uint16_t dst_port;
-    uint8_t tcp_flags;
-    uint8_t prot;
-    uint8_t tos;
 };
 
 struct netflow_v5_flow_record
@@ -93,9 +78,26 @@ struct netflow_v5_key
     uint8_t tos;
 };
 
+struct flow_node
+{
+    uint32_t src_addr;
+    uint32_t dst_addr;
+    uint32_t packets;
+    uint32_t octets;
+    struct timeval* first;
+    struct timeval* last;
+    uint16_t src_port;
+    uint16_t dst_port;
+    uint8_t tcp_flags;
+    uint8_t prot;
+    uint8_t tos;
+};
+
 struct netflow_recording_system
 {
     struct bst_node* tree;
+    struct timeval* first_packet_time;
+    struct timeval* last_packet_time;
 };
 
 struct netflow_sending_system
@@ -111,8 +113,9 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
 
-uint8_t export_flow (flow_node_t flow_export,
-                     netflow_sending_system_t sending_system);
+uint8_t export_flow (netflow_recording_system_t netflow_records,
+                     netflow_sending_system_t sending_system,
+                     flow_node_t flow_export);
 
 void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
                                     netflow_sending_system_t sending_system);

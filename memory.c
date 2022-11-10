@@ -134,6 +134,22 @@ uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
 
     (*netflow_records)->tree = NULL;
 
+    (*netflow_records)->first_packet_time =
+            (struct timeval*) malloc(sizeof(struct timeval));
+
+    if(!is_allocated((*netflow_records)->first_packet_time))
+    {
+        return EXIT_FAILURE;
+    }
+
+    (*netflow_records)->last_packet_time =
+            (struct timeval*) malloc(sizeof(struct timeval));
+
+    if(!is_allocated((*netflow_records)->last_packet_time))
+    {
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }
 
@@ -155,12 +171,28 @@ uint8_t allocate_sending_system (netflow_sending_system_t* sending_system)
     return EXIT_SUCCESS;
 }
 
-uint8_t allocate_netflow_record (flow_node_t* flow_record)
+uint8_t allocate_flow_node (flow_node_t* flow_record)
 {
     *flow_record =
             (flow_node_t) malloc(sizeof(struct flow_node));
 
     if (!is_allocated(*flow_record))
+    {
+        return EXIT_FAILURE;
+    }
+
+    (*flow_record)->first =
+            (struct timeval*) malloc(sizeof(struct timeval));
+
+    if (!is_allocated((*flow_record)->first))
+    {
+        return EXIT_FAILURE;
+    }
+
+    (*flow_record)->last =
+            (struct timeval*) malloc(sizeof(struct timeval));
+
+    if (!is_allocated((*flow_record)->last))
     {
         return EXIT_FAILURE;
     }
@@ -194,10 +226,22 @@ uint8_t allocate_tree_node (bst_node_t* tree_node)
     return EXIT_SUCCESS;
 }
 
-void free_netflow_record (flow_node_t* flow_record)
+void free_flow_node (flow_node_t* flow_record)
 {
     if (is_allocated(*flow_record))
     {
+        if (is_allocated((*flow_record)->first))
+        {
+            free((*flow_record)->first);
+            (*flow_record)->first = NULL;
+        }
+
+        if (is_allocated((*flow_record)->last))
+        {
+            free((*flow_record)->last);
+            (*flow_record)->last = NULL;
+        }
+
         free(*flow_record);
         *flow_record = NULL;
     }
@@ -223,7 +267,7 @@ void free_tree_node (bst_node_t* tree_node)
 
         if (is_allocated((*tree_node)->value))
         {
-            free_netflow_record(&((*tree_node)->value));
+            free_flow_node(&((*tree_node)->value));
         }
 
         free(*tree_node);
@@ -303,6 +347,18 @@ void free_recording_system (netflow_recording_system_t* netflow_records)
 {
     if (is_allocated(*netflow_records))
     {
+        if (is_allocated((*netflow_records)->first_packet_time))
+        {
+            free((*netflow_records)->first_packet_time);
+            (*netflow_records)->first_packet_time = NULL;
+        }
+
+        if (is_allocated((*netflow_records)->last_packet_time))
+        {
+            free((*netflow_records)->last_packet_time);
+            (*netflow_records)->last_packet_time = NULL;
+        }
+
         free(*netflow_records);
         *netflow_records = NULL;
     }

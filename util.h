@@ -53,4 +53,6 @@ bool in_range (const unsigned int value,
 
 uint8_t parse_name_port (char* in_source, char** out_name, char** out_port);
 
+u_int32_t get_timeval_ms(struct timeval* time, struct timeval* first_packet_time);
+
 #endif // FLOW_UTIL_H
