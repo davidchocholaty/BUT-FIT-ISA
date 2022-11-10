@@ -100,7 +100,16 @@ uint8_t parse_name_port (char* in_source, char** out_name, char** out_port)
 
     if (delimiter_addr == NULL)
     {
-        return INVALID_OPTION_ERROR;
+        // Does not contain optional port value (only name or value).
+        out_port = NULL;
+        status = allocate_string(out_name, strlen(in_source));
+
+        if (status != NO_ERROR)
+        {
+            return MEMORY_HANDLING_ERROR;
+        }
+
+        strcpy(*out_name, in_source);
     }
     else
     {

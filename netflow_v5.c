@@ -95,14 +95,17 @@ uint8_t connect_socket (int* sock, char* source)
     // copy the first parameter to the server.sin_addr structure
     memcpy(&server.sin_addr, servent->h_addr, servent->h_length);
 
-    port_numeric = strtol(source_port, &end, 10);
-
-    if (port_numeric == 0L)
+    if (source_port != NULL)
     {
-        return INVALID_OPTION_ERROR;
-    }
+        port_numeric = strtol(source_port, &end, 10);
 
-    server.sin_port = htons((uint16_t)port_numeric);        // server port (network byte order)
+        if (port_numeric == 0L)
+        {
+            return INVALID_OPTION_ERROR;
+        }
+
+        server.sin_port = htons((uint16_t)port_numeric);        // server port (network byte order)
+    }
 
     //create a client socket
     if ((*sock = socket(AF_INET , SOCK_DGRAM , 0)) == -1)
