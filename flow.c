@@ -103,17 +103,15 @@ int main (int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    status = run_exporter(options, netflow_records, sending_system);
 
-    //status = run_exporter(options, netflow_records, sending_system);
-/*
     if (status != NO_ERROR)
     {
         print_error(status, argv[0]);
-        flow_epilogue(options, netflow_records, &socket);
+        flow_epilogue(options, netflow_records, sending_system);
 
         return EXIT_FAILURE;
     }
-*/
 
     status = flow_epilogue(options, netflow_records, sending_system);
 

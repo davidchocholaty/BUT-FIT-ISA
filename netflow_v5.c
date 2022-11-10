@@ -39,15 +39,18 @@
 #include "tree.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
+#define MAX_BUFFER_SIZE 1024                // buffer length
 #define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
                          sizeof(struct netflow_v5_flow_record))
 
-void export_flow (netflow_v5_flow_record_t flow_export,
-                  netflow_sending_system_t sending_system)
+uint8_t export_flow (netflow_v5_flow_record_t flow_export,
+                     netflow_sending_system_t sending_system)
 {
     const uint16_t version = 5;
     const uint16_t flows_count = 1;
-    int offset;
+    size_t offset;
+    size_t packet_size;
+    ssize_t return_code;
     uint8_t packet[MAX_PACKET_SIZE];
     netflow_v5_header_t header;
     netflow_v5_flow_record_t flow_record;
@@ -83,27 +86,39 @@ void export_flow (netflow_v5_flow_record_t flow_export,
     // The rest of values are left zero.
 
 
-    // Send packet
+    packet_size = offset + sizeof(*flow_record);
 
-    // TODO smazat
-    sending_system = sending_system;
+    // Send packet
+    return_code = send(*(sending_system->socket), packet, packet_size, 0);
+
+    if (return_code == -1)
+    {
+        // Send failed.
+        return PACKET_SENDING_ERROR;
+    }
+    else if ((size_t)return_code != packet_size)
+    {
+        // Buffer written partially.
+        return PACKET_SENDING_ERROR;
+    }
 
 /*
-    i = send(sock,buffer,msg_size,0);     // send data to the server
-    if (i == -1)                   // check if data was sent correctly
-        err(1,"send() failed");
-    else if (i != msg_size)
-        err(1,"send(): buffer written partially");
+    // Read the answer from the server.
+    return_code = recv(*(sending_system->socket), packet, MAX_BUFFER_SIZE, 0);
 
-    // read the answer from the server
-    if ((i = recv(sock,buffer, BUFFER,0)) == -1)
-        err(1,"recv() failed");
+    if (return_code == -1)
+    {
+        // Recv failed.
+        return PACKET_SENDING_ERROR;
+    }
 */
 
+
     static int i = 1;
-    flow_export->tos = flow_export->tos;
     printf("exporting flow %d\n", i);
     i++;
+
+    return NO_ERROR;
 }
 
 void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
@@ -409,6 +424,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
         printf("process_packet: tree is null\n");
     }
 */
+
     // Check timers with actual packet timestamp value
     // and export the expired flows.
     bst_export_expired(&(netflow_records->tree), sending_system, packet_time_stamp, options);

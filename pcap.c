@@ -132,6 +132,7 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
 
     while ((return_code = pcap_next_ex(handle, &header, &packet)) > 0)
     {
+        printf("processing packet: %d\n", packet_number);
 
         packet_number++;
 
@@ -155,6 +156,8 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
                 break;
         }
     }
+
+    printf("end of processing packets\n");
 
     if (return_code != PCAP_ERROR_BREAK)
     {

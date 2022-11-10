@@ -95,8 +95,8 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
 
-void export_flow (netflow_v5_flow_record_t flow_export,
-                  netflow_sending_system_t sending_system);
+uint8_t export_flow (netflow_v5_flow_record_t flow_export,
+                     netflow_sending_system_t sending_system);
 
 void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
                                     netflow_sending_system_t sending_system);
