@@ -51,11 +51,10 @@ void bst_dispose(bst_node_t* tree);
 
 void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree);
 
-void bst_export_expired (struct netflow_recording_system* netflow_records,
-                         struct netflow_sending_system* sending_system,
-                         bst_node_t* tree,
-                         struct timeval actual_time_stamp,
-                         options_t options);
+uint8_t bst_find_expired (bst_node_t* tree,
+                          bst_node_t* expired_flows_tree,
+                          struct timeval* actual_time_stamp,
+                          options_t options);
 
 void bst_export_all (struct netflow_recording_system* netflow_records,
                      struct netflow_sending_system* sending_system,

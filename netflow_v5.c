@@ -316,6 +316,33 @@ uint8_t find_flow (bst_node_t* flows_tree,
     return status;
 }
 
+uint8_t export_expired_flows(netflow_recording_system_t netflow_records,
+                             netflow_sending_system_t sending_system,
+                             struct timeval* packet_time_stamp,
+                             options_t options)
+{
+    uint8_t status;
+    bst_node_t expired_flows_tree;
+
+    bst_init(&expired_flows_tree);
+
+    // Add expired flows into the expired flows tree.
+    status = bst_find_expired(&(netflow_records->tree),
+                              &expired_flows_tree,
+                              packet_time_stamp,
+                              options);
+
+    if (status != NO_ERROR)
+    {
+        return status;
+    }
+
+    // Export all flows from the expired flows tree by the oldest one.
+    bst_export_all(netflow_records, sending_system, &expired_flows_tree);
+
+    return NO_ERROR;
+}
+
 uint8_t process_packet (netflow_recording_system_t netflow_records,
                         netflow_sending_system_t sending_system,
                         const struct pcap_pkthdr* header,
@@ -357,7 +384,15 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     // Check timers with actual packet timestamp value
     // and export the expired flows.
-    bst_export_expired(netflow_records, sending_system, &(netflow_records->tree), packet_time_stamp, options);
+    status = export_expired_flows(netflow_records,
+                                  sending_system,
+                                  &packet_time_stamp,
+                                  options);
+
+    if (status != NO_ERROR)
+    {
+        return status;
+    }
 
     status = allocate_netflow_key(&packet_key);
 
@@ -385,7 +420,6 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             packet_key->src_port = 0;
             packet_key->dst_port = 0;
 
-            // TODO packet_layer_3_bytes
             find_flow(&(netflow_records->tree),
                       packet_key,
                       &packet_time_stamp,
@@ -400,7 +434,6 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
             tcp_flags = my_tcp->th_flags;
 
-            // TODO packet_layer_3_bytes
             find_flow(&(netflow_records->tree),
                       packet_key,
                       &packet_time_stamp,
@@ -413,7 +446,6 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             packet_key->src_port = ntohs(my_udp->uh_sport);
             packet_key->dst_port = ntohs(my_udp->uh_dport);
 
-            // TODO packet_layer_3_bytes
             find_flow(&(netflow_records->tree),
                       packet_key,
                       &packet_time_stamp,
@@ -432,16 +464,6 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)
 {
     int return_code;
-
-    if (first_flow == NULL)
-    {
-        printf("first flow is NULL\n");
-    }
-
-    if (first_flow == NULL)
-    {
-        printf("first flow is NULL\n");
-    }
 
     if (first_flow->input != second_flow->input)
     {

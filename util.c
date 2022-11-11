@@ -157,11 +157,6 @@ u_int32_t get_timeval_ms(struct timeval* time, struct timeval* first_packet_time
 
 int compare_timeval (struct timeval* first_time, struct timeval* second_time)
 {
-    printf("first time tv_sec: %ld\n", first_time->tv_sec);
-    printf("second time tv_sec: %ld\n", second_time->tv_sec);
-    printf("first time tv_usec: %ld\n", first_time->tv_usec);
-    printf("second time tv_usec: %ld\n", second_time->tv_usec);
-
     if (first_time->tv_sec != second_time->tv_sec)
     {
         return (first_time->tv_sec > second_time->tv_sec) ? 1 : -1;
@@ -169,16 +164,6 @@ int compare_timeval (struct timeval* first_time, struct timeval* second_time)
 
     if (first_time->tv_usec != second_time->tv_usec)
     {
-        printf("here comparition\n");
-        if (first_time->tv_usec > second_time->tv_usec)
-        {
-            printf("first greater\n");
-        }
-        else
-        {
-            printf("second greater\n");
-        }
-
         return (first_time->tv_usec > second_time->tv_usec) ? 1 : -1;
     }
 

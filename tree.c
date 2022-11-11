@@ -15,6 +15,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "error.h"
 #include "memory.h"
@@ -206,39 +207,102 @@ void bst_dispose(bst_node_t* tree) {
 
 //------------------------------------------------
 
-void bst_export_expired (netflow_recording_system_t netflow_records,
-                         netflow_sending_system_t sending_system,
-                         bst_node_t* tree,
-                         struct timeval actual_time_stamp,
-                         options_t options)
+uint8_t bst_find_expired (bst_node_t* tree,
+                          bst_node_t* expired_flows_tree,
+                          struct timeval* actual_time_stamp,
+                          options_t options)
 {
+    uint8_t status;
+    netflow_v5_key_t flow_key;
+    flow_node_t flow_value;
+
     if (*tree != NULL)
     {
         // TODO exportovani od nejstarsiho zaznamu
-
-        bst_export_expired(netflow_records, sending_system, &((*tree)->left), actual_time_stamp, options);
-        bst_export_expired(netflow_records, sending_system, &((*tree)->right), actual_time_stamp, options);
+        bst_find_expired(&((*tree)->left), expired_flows_tree, actual_time_stamp, options);
+        bst_find_expired(&((*tree)->right), expired_flows_tree, actual_time_stamp, options);
 /*
-        if ((actual_time_stamp.tv_sec - (*tree)->value->first->tv_sec) >
+        if ((actual_time_stamp->tv_sec - (*tree)->value->first->tv_sec) >
             options->active_entries_timeout->timeout_seconds) // Active timer check
         {
-            // Flow expired because of active timer.
-            export_flow(netflow_records, sending_system, (*tree)->value);
-            // Remove tree node.
+            status = allocate_netflow_key(&flow_key);
+
+            if (status != NO_ERROR)
+            {
+                return MEMORY_HANDLING_ERROR;
+            }
+
+            status = allocate_flow_node(&flow_value);
+
+            if (status != NO_ERROR)
+            {
+                return MEMORY_HANDLING_ERROR;
+            }
+
+            memcpy(flow_key, (*tree)->key, sizeof(*flow_key));
+            memcpy(flow_value, (*tree)->value, sizeof(*flow_value));
+            memcpy(flow_value->first, (*tree)->value->first, sizeof(*(flow_value->first)));
+            memcpy(flow_value->last, (*tree)->value->last, sizeof(*(flow_value->last)));
+
+            // Add to the tree of expired flows.
+            status = bst_insert(expired_flows_tree, flow_key, flow_value);
+
+            if (status != NO_ERROR)
+            {
+                return status;
+            }
+
+            // Remove node from the flows tree.
             bst_delete(tree, (*tree)->key);
         }
 
-        else if (actual_time_stamp.tv_sec - (*tree)->value->last->tv_sec >
+        else*/ if (actual_time_stamp->tv_sec - (*tree)->value->last->tv_sec >
             options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
         {
-            // Flow expired because of inactive timer.
-            export_flow(netflow_records, sending_system, (*tree)->value);
-            // Remove tree node.
+            status = allocate_netflow_key(&flow_key);
+
+            if (status != NO_ERROR)
+            {
+                return MEMORY_HANDLING_ERROR;
+            }
+
+            status = allocate_flow_node(&flow_value);
+
+            if (status != NO_ERROR)
+            {
+                return MEMORY_HANDLING_ERROR;
+            }
+
+            memcpy(flow_key, (*tree)->key, sizeof(*flow_key));
+            memcpy(flow_value->first, (*tree)->value->first, sizeof(*(flow_value->first)));
+            memcpy(flow_value->last, (*tree)->value->last, sizeof(*(flow_value->last)));
+
+            flow_value->src_addr = (*tree)->value->src_addr;
+            flow_value->dst_addr = (*tree)->value->dst_addr;
+            flow_value->packets = (*tree)->value->packets;
+            flow_value->octets = (*tree)->value->octets;
+            flow_value->src_port = (*tree)->value->src_port;
+            flow_value->dst_port = (*tree)->value->dst_port;
+            flow_value->tcp_flags = (*tree)->value->tcp_flags;
+            flow_value->prot = (*tree)->value->prot;
+            flow_value->tos = (*tree)->value->tos;
+
+            // Add to the tree of expired flows.
+            status = bst_insert(expired_flows_tree, flow_key, flow_value);
+
+            if (status != NO_ERROR)
+            {
+                return status;
+            }
+
+            // Remove node from the flows tree.
             bst_delete(tree, (*tree)->key);
         }
-*/
+
         // TODO TCP flags etc.
     }
+
+    return NO_ERROR;
 }
 
 // https://stackoverflow.com/questions/11728191/how-to-create-a-function-that-returns-smallest-value-of-an-unordered-binary-tree
@@ -295,8 +359,6 @@ void bst_export_all (netflow_recording_system_t netflow_records,
     {
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
-
-        printf("oldest packet time values: %ld %ld\n", oldest_node->value->first->tv_sec, oldest_node->value->first->tv_usec);
 
         export_flow(netflow_records,
                     sending_system,
