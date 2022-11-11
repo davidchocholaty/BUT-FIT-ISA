@@ -120,6 +120,8 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
     //printf("exporting flow %d\n", i);
     //i++;
 
+    printf("flow sequence number: %d\n", flow_sequence_number);
+
     flow_sequence_number++;
 
     // Update the cached flows number.
@@ -288,8 +290,8 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         new_flow->src_addr = packet_key->src_addr;
         new_flow->dst_addr = packet_key->dst_addr;
 
-        new_flow->src_port = packet_key->src_port;
-        new_flow->dst_port = packet_key->dst_port;
+        new_flow->src_port = htons(packet_key->src_port);
+        new_flow->dst_port = htons(packet_key->dst_port);
 
         new_flow->prot = packet_key->prot;
 
