@@ -364,10 +364,6 @@ void bst_export_all (netflow_recording_system_t netflow_records,
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
 
-        // TODO Problem here, node v oldest node neni nejstarsi node ve strome
-        //  a zde se zpusobuje chybne poradi exportovani flows
-        printf("flow times: %ld %ld\n", oldest_node->value->first->tv_sec, oldest_node->value->first->tv_usec);
-
         export_flow(netflow_records,
                     sending_system,
                     oldest_node->value);
