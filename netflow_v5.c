@@ -86,8 +86,8 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
     flow_record->last = htonl(get_timeval_ms(flow_export->last,
                                              netflow_records->first_packet_time));
 
-    flow_record->src_port = flow_export->src_port;
-    flow_record->dst_port = flow_export->dst_port;
+    flow_record->src_port = htons(flow_export->src_port);
+    flow_record->dst_port = htons(flow_export->dst_port);
     flow_record->tcp_flags = flow_export->tcp_flags;
     flow_record->prot = flow_export->prot;
     flow_record->tos = flow_export->tos;
@@ -290,8 +290,8 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         new_flow->src_addr = packet_key->src_addr;
         new_flow->dst_addr = packet_key->dst_addr;
 
-        new_flow->src_port = htons(packet_key->src_port);
-        new_flow->dst_port = htons(packet_key->dst_port);
+        new_flow->src_port = packet_key->src_port;
+        new_flow->dst_port = packet_key->dst_port;
 
         new_flow->prot = packet_key->prot;
 
