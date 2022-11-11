@@ -274,11 +274,13 @@ uint8_t bst_find_expired (bst_node_t* tree,
         if ((actual_time_stamp->tv_sec - (*tree)->value->first->tv_sec) >
             options->active_entries_timeout->timeout_seconds) // Active timer check
         {
+            printf("exporting because of ACTIVE timer\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
         else if (actual_time_stamp->tv_sec - (*tree)->value->last->tv_sec >
             options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
         {
+            printf("exporting because of INACTIVE timer\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
         else if (((*tree)->value->tcp_flags & TH_RST) ||
@@ -298,6 +300,7 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
 {
     struct timeval* time = NULL;
     struct timeval* compare_node_time = NULL;
+    struct timeval* oldest_node_time;
     bst_node_t compare_node;
 
     if (*tree != NULL)
@@ -314,7 +317,14 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
             {
                 // Left node has smaller time.
                 time = compare_node_time;
-                *oldest_node = (*tree)->left;
+
+                oldest_node_time = (*oldest_node)->value->first;
+
+                // If the time is smaller than currently the oldest one, replace it.
+                if (compare_timeval(compare_node_time, oldest_node_time) < 0)
+                {
+                    *oldest_node = compare_node;
+                }
             }
         }
 
@@ -328,7 +338,14 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
             {
                 // Right node has smaller time.
                 time = compare_node_time;
-                *oldest_node = (*tree)->right;
+
+                oldest_node_time = (*oldest_node)->value->first;
+
+                // If the time is smaller than currently the oldest one, replace it.
+                if (compare_timeval(compare_node_time, oldest_node_time) < 0)
+                {
+                    *oldest_node = compare_node;
+                }
             }
         }
     }
@@ -346,6 +363,10 @@ void bst_export_all (netflow_recording_system_t netflow_records,
     {
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
+
+        // TODO Problem here, node v oldest node neni nejstarsi node ve strome
+        //  a zde se zpusobuje chybne poradi exportovani flows
+        printf("flow times: %ld %ld\n", oldest_node->value->first->tv_sec, oldest_node->value->first->tv_usec);
 
         export_flow(netflow_records,
                     sending_system,
