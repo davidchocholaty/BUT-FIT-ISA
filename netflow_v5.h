@@ -98,6 +98,7 @@ struct netflow_recording_system
     struct bst_node* tree;
     struct timeval* first_packet_time;
     struct timeval* last_packet_time;
+    uint64_t* cached_flows_number;
 };
 
 struct netflow_sending_system

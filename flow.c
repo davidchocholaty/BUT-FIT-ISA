@@ -51,6 +51,7 @@ uint8_t run_exporter (options_t options,
                       netflow_sending_system_t sending_system)
 {
     bst_init(&(netflow_records->tree));
+    *(netflow_records->cached_flows_number) = 0;
 
     run_packets_processing(netflow_records, sending_system, options);
                            //options->analyzed_input_source->file_name);

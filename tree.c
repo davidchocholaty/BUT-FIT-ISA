@@ -353,6 +353,24 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
     return time;
 }
 
+void bst_export_oldest (netflow_recording_system_t netflow_records,
+                        netflow_sending_system_t sending_system,
+                        bst_node_t* tree)
+{
+    bst_node_t oldest_node;
+
+    if (*tree != NULL)
+    {
+        oldest_node = *tree;
+        bst_find_oldest(tree, &oldest_node);
+
+        export_flow(netflow_records,
+                    sending_system,
+                    oldest_node->value);
+        bst_delete(tree, oldest_node->key);
+    }
+}
+
 void bst_export_all (netflow_recording_system_t netflow_records,
                      netflow_sending_system_t sending_system,
                      bst_node_t* tree)
@@ -369,14 +387,4 @@ void bst_export_all (netflow_recording_system_t netflow_records,
                     oldest_node->value);
         bst_delete(tree, oldest_node->key);
     }
-/*
-    if (*tree != NULL)
-    {
-        bst_export_all(netflow_records, sending_system, &((*tree)->left));
-        bst_export_all(netflow_records, sending_system, &((*tree)->right));
-
-        export_flow(netflow_records, sending_system,  (*tree)->value);
-    }
-*/
-
 }
