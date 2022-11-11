@@ -289,8 +289,7 @@ uint8_t find_flow (bst_node_t* flows_tree,
 
         new_flow->tos = packet_key->tos;
 
-        new_flow->tcp_flags |= packet_tcp_flags;
-        // TODO later expiration because TH_RST or TH_FIN
+        new_flow->tcp_flags = packet_tcp_flags;
 
         // Set other specific values.
         new_flow->packets = 1;

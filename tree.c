@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <netinet/tcp.h>
+
 #include "error.h"
 #include "memory.h"
 #include "netflow_v5.h"
@@ -279,8 +281,12 @@ uint8_t bst_find_expired (bst_node_t* tree,
         {
             status = bst_move_node(expired_flows_tree, tree);
         }
-
-        // TODO TCP flags etc.
+        else if (((*tree)->value->tcp_flags & TH_RST) ||
+        ((*tree)->value->tcp_flags & TH_FIN))
+        {
+            printf("exporting because of TCP flags\n");
+            status = bst_move_node(expired_flows_tree, tree);
+        }
     }
 
     return status;
