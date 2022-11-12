@@ -27,8 +27,14 @@
 // TODO maybe later delete
 #include <netinet/in.h>
 #include <netinet/ip.h>
+
+#define __FAVOR_BSD // For Merlin server.
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+#undef __FAVOR_BSD // For Merlin server.
+
+#include <netdb.h> // For Merlin server.
+
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 

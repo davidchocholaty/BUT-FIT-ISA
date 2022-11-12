@@ -17,7 +17,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define __FAVOR_BSD // For Merlin server.
 #include <netinet/tcp.h>
+#undef __FAVOR_BSD // For Merlin server.
 
 #include "error.h"
 #include "memory.h"
