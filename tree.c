@@ -300,19 +300,19 @@ uint8_t bst_find_expired (bst_node_t* tree,
         if ((actual_time_stamp->tv_sec - (*tree)->value->first->tv_sec) >
             options->active_entries_timeout->timeout_seconds) // Active timer check
         {
-            printf("exporting because of ACTIVE timer\n");
+            //printf("exporting because of ACTIVE timer\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
         else if (actual_time_stamp->tv_sec - (*tree)->value->last->tv_sec >
             options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
         {
-            printf("exporting because of INACTIVE timer\n");
+            //printf("exporting because of INACTIVE timer\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
         else if (((*tree)->value->tcp_flags & TH_RST) ||
         ((*tree)->value->tcp_flags & TH_FIN))
         {
-            printf("exporting because of TCP flags\n");
+            //printf("exporting because of TCP flags\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
     }
@@ -390,6 +390,7 @@ void bst_export_oldest (netflow_recording_system_t netflow_records,
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
 
+        // TODO return status
         export_flows(netflow_records,
                     sending_system,
                     &(oldest_node->value),
@@ -416,13 +417,9 @@ void bst_export_all (netflow_recording_system_t netflow_records,
 
         bst_delete(tree, oldest_node->key, true);
 
-        if (flows[flows_number-1] == NULL)
-        {
-            printf("IS NULL\n");
-        }
-
         if (flows_number == MAX_FLOWS_NUMBER)
         {
+            // TODO return status
             export_flows(netflow_records,
                          sending_system,
                          flows,
@@ -435,6 +432,7 @@ void bst_export_all (netflow_recording_system_t netflow_records,
 
     if (flows_number > 0)
     {
+        // TODO return status
         export_flows(netflow_records,
                      sending_system,
                      flows,

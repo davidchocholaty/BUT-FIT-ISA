@@ -76,9 +76,8 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
     header->unix_secs = htonl(netflow_records->last_packet_time->tv_sec);
     header->unix_nsecs = htonl(netflow_records->last_packet_time->tv_usec * 1000);
     header->flow_sequence = htonl(flow_sequence_number);
-
-    // header->sampling_interval = htons(0x01 << 14); // TODO
-    // header->engine_type and header->engine_id are left zero.
+    // header->engine_type, header->engine_id and header->sampling_interval
+    // are left zero.
 
     for (uint16_t i = 0; i < flows_number; i++)
     {
@@ -113,28 +112,10 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
         return PACKET_SENDING_ERROR;
     }
 
-/*
-    // Read the answer from the server.
-    return_code = recv(*(sending_system->socket), packet, MAX_BUFFER_SIZE, 0);
-
-    if (return_code == -1)
-    {
-        // Recv failed.
-        return PACKET_SENDING_ERROR;
-    }
-*/
-
-
-    // static int i = 1;
-    //printf("exporting flow %d\n", i);
-    //i++;
-
-    printf("flow sequence number: %d\n", flow_sequence_number);
-
-    flow_sequence_number++;
+    flow_sequence_number += flows_number;
 
     // Update the cached flows number.
-    *(netflow_records->cached_flows_number) -= (uint16_t)flows_number;
+    *(netflow_records->cached_flows_number) -= (uint64_t)flows_number;
 
     return NO_ERROR;
 }
@@ -246,13 +227,6 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
     flow_node_t flow = NULL;
     bst_node_t* flows_tree = &(netflow_records->tree);
 
-    //----------------------------------------------
-    //static int p = 1;
-
-    //printf("packet: %d\n", p);
-
-    //p++;
-    //----------------------------------------------
 
     if (!bst_search(*flows_tree, packet_key, &flow))
     {
@@ -320,16 +294,12 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         // Add flow into the flows tree.
         status = bst_insert(flows_tree, new_key, new_flow);
 
-        // Handle the cache size. If exceeded, the oldest record
-        // will be exported.
-        if (*(netflow_records->cached_flows_number) ==
+        *(netflow_records->cached_flows_number) += 1;
+
+        if (*(netflow_records->cached_flows_number) >
         options->cached_entries_number->entries_number)
         {
             bst_export_oldest(netflow_records, sending_system, flows_tree);
-        }
-        else
-        {
-            *(netflow_records->cached_flows_number) += 1;
         }
     }
     else

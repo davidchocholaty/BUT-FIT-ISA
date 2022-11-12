@@ -29,19 +29,28 @@ typedef struct options* options_t;
 
 enum active_timeout_range
 {
-    ACTIVE_TIMEOUT_MIN = 60,
-    ACTIVE_TIMEOUT_MAX = 3600
+    // TODO vratit zpet
+    //ACTIVE_TIMEOUT_MIN = 60,
+    //ACTIVE_TIMEOUT_MAX = 3600
+    ACTIVE_TIMEOUT_MIN = 1,
+    ACTIVE_TIMEOUT_MAX = 100
 };
 
 enum inactive_timeout_range
 {
-    INACTIVE_TIMEOUT_MIN = 10,
-    INACTIVE_TIMEOUT_MAX = 600
+    // TODO vratit zpet
+    //INACTIVE_TIMEOUT_MIN = 10,
+    //INACTIVE_TIMEOUT_MAX = 600
+    INACTIVE_TIMEOUT_MIN = 1,
+    INACTIVE_TIMEOUT_MAX = 100
 };
 
 enum entries_number_range
 {
-    ENTRIES_NUMBER_MIN = 1024,
+    // TODO vratit zpet
+    //ENTRIES_NUMBER_MIN = 1024,
+    //ENTRIES_NUMBER_MAX = 524288
+    ENTRIES_NUMBER_MIN = 1,
     ENTRIES_NUMBER_MAX = 524288
 };
 
