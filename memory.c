@@ -292,6 +292,14 @@ void free_tree_node_keep_data (bst_node_t* tree_node)
     }
 }
 
+void free_flow_values_array (flow_node_t* flows, uint16_t flows_number)
+{
+    for (uint16_t i = 0; i < flows_number; i++)
+    {
+        free_flow_node(&(flows[i]));
+    }
+}
+
 void free_string (char** string)
 {
     if (is_allocated(*string))

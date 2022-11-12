@@ -44,12 +44,12 @@ uint8_t bst_insert(bst_node_t* tree,
                    struct netflow_v5_key* key,
                    struct flow_node* value);
 
-void bst_delete(bst_node_t* tree, struct netflow_v5_key* key);
+void bst_delete(bst_node_t* tree, struct netflow_v5_key* key, bool keep_value);
 
 void bst_dispose(bst_node_t* tree);
 
 
-void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree);
+void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree, bool keep_value);
 
 uint8_t bst_find_expired (bst_node_t* tree,
                           bst_node_t* expired_flows_tree,

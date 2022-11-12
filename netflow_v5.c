@@ -48,21 +48,20 @@
 #include "util.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
-#define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
-                         sizeof(struct netflow_v5_flow_record))
 #define DEFAULT_PORT 2055
 
-uint8_t export_flow (netflow_recording_system_t netflow_records,
-                     netflow_sending_system_t sending_system,
-                     flow_node_t flow_export)
+uint8_t export_flows (netflow_recording_system_t netflow_records,
+                      netflow_sending_system_t sending_system,
+                      flow_node_t* flows,
+                      const uint16_t flows_number)
 {
     static uint32_t flow_sequence_number = 0;
     const uint16_t version = 5;
-    const uint16_t flows_count = 1;
+    const size_t packet_size = (size_t) (sizeof(struct netflow_v5_header) +
+            flows_number * sizeof(struct netflow_v5_flow_record));
     size_t offset;
-    size_t packet_size;
     ssize_t return_code;
-    uint8_t packet[MAX_PACKET_SIZE];
+    uint8_t packet[packet_size];
     netflow_v5_header_t header;
     netflow_v5_flow_record_t flow_record;
 
@@ -71,38 +70,39 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
     header = (netflow_v5_header_t) packet;
 
     header->version = htons(version);
-    header->count = htons(flows_count);
+    header->count = htons(flows_number);
     header->sysuptime_ms = htonl(get_timeval_ms(netflow_records->last_packet_time,
                                                 netflow_records->first_packet_time));
     header->unix_secs = htonl(netflow_records->last_packet_time->tv_sec);
     header->unix_nsecs = htonl(netflow_records->last_packet_time->tv_usec * 1000);
     header->flow_sequence = htonl(flow_sequence_number);
 
-    // header->sampling_interval = htons(0x01 << 14);
+    // header->sampling_interval = htons(0x01 << 14); // TODO
     // header->engine_type and header->engine_id are left zero.
 
-    offset = sizeof(*header);
+    for (uint16_t i = 0; i < flows_number; i++)
+    {
+        offset = sizeof(*header) + i * sizeof(*flow_record);
 
-    flow_record = (netflow_v5_flow_record_t) (packet + offset);
+        flow_record = (netflow_v5_flow_record_t) (packet + offset);
 
-    flow_record->src_addr = flow_export->src_addr;
-    flow_record->dst_addr = flow_export->dst_addr;
-    flow_record->packets = htonl(flow_export->packets);
-    flow_record->octets = htonl(flow_export->octets);
+        flow_record->src_addr = flows[i]->src_addr;
+        flow_record->dst_addr = flows[i]->dst_addr;
+        flow_record->packets = htonl(flows[i]->packets);
+        flow_record->octets = htonl(flows[i]->octets);
 
-    flow_record->first = htonl(get_timeval_ms(flow_export->first,
-                                              netflow_records->first_packet_time));
-    flow_record->last = htonl(get_timeval_ms(flow_export->last,
-                                             netflow_records->first_packet_time));
+        flow_record->first = htonl(get_timeval_ms(flows[i]->first,
+                                                  netflow_records->first_packet_time));
+        flow_record->last = htonl(get_timeval_ms(flows[i]->last,
+                                                 netflow_records->first_packet_time));
 
-    flow_record->src_port = htons(flow_export->src_port);
-    flow_record->dst_port = htons(flow_export->dst_port);
-    flow_record->tcp_flags = flow_export->tcp_flags;
-    flow_record->prot = flow_export->prot;
-    flow_record->tos = flow_export->tos;
-    // The rest of values are left zero.
-
-    packet_size = offset + sizeof(*flow_record);
+        flow_record->src_port = htons(flows[i]->src_port);
+        flow_record->dst_port = htons(flows[i]->dst_port);
+        flow_record->tcp_flags = flows[i]->tcp_flags;
+        flow_record->prot = flows[i]->prot;
+        flow_record->tos = flows[i]->tos;
+        // The rest of values are left zero.
+    }
 
     // Send packet
     return_code = send(*(sending_system->socket), packet, packet_size, 0);
@@ -134,7 +134,7 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
     flow_sequence_number++;
 
     // Update the cached flows number.
-    *(netflow_records->cached_flows_number) -= 1;
+    *(netflow_records->cached_flows_number) -= (uint16_t)flows_number;
 
     return NO_ERROR;
 }

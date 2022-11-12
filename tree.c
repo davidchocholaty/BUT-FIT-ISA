@@ -106,7 +106,7 @@ uint8_t bst_insert(bst_node_t* tree,
     return status;
 }
 
-void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree) {
+void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree, bool keep_value) {
     bst_node_t tmp;
 
     // Tree has node right subtree
@@ -114,7 +114,11 @@ void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree) {
     if ((*tree)->right == NULL)
     {
         free_netflow_key(&(target->key));
-        free_flow_node(&(target->value));
+
+        if (!keep_value)
+        {
+            free_flow_node(&(target->value));
+        }
 
         tmp = *tree;
 
@@ -131,7 +135,11 @@ void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree) {
     if ((*tree)->right->right == NULL)
     {
         free_netflow_key(&(target->key));
-        free_flow_node(&(target->value));
+
+        if (!keep_value)
+        {
+            free_flow_node(&(target->value));
+        }
 
         tmp = (*tree)->right;
 
@@ -144,10 +152,10 @@ void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree) {
         return;
     }
 
-    bst_replace_by_rightmost(target, &((*tree)->right));
+    bst_replace_by_rightmost(target, &((*tree)->right), keep_value);
 }
 
-void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
+void bst_delete(bst_node_t* tree, netflow_v5_key_t key, bool keep_value) {
     bst_node_t tmp;
     int comparison_status;
 
@@ -159,13 +167,21 @@ void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
         {
             if ((*tree)->left == NULL && (*tree)->right == NULL)
             {
-                free_tree_node(tree);
+                if (keep_value)
+                {
+                    free_netflow_key(&((*tree)->key));
+                    free_tree_node_keep_data(tree);
+                }
+                else
+                {
+                    free_tree_node(tree);
+                }
             }
             else
             {
                 if ((*tree)->left != NULL && (*tree)->right != NULL)
                 {
-                    bst_replace_by_rightmost(*tree, &((*tree)->left));
+                    bst_replace_by_rightmost(*tree, &((*tree)->left), keep_value);
                 }
                 else
                 {
@@ -180,7 +196,15 @@ void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
                         *tree = (*tree)->left;
                     }
 
-                    free_tree_node(&tmp);
+                    if (keep_value)
+                    {
+                        free_netflow_key(&(tmp->key));
+                        free_tree_node_keep_data(&tmp);
+                    }
+                    else
+                    {
+                        free_tree_node(&tmp);
+                    }
                 }
             }
         }
@@ -188,12 +212,12 @@ void bst_delete(bst_node_t* tree, netflow_v5_key_t key) {
         {
             if (comparison_status > 0)
             {
-                bst_delete(&((*tree)->left), key);
+                bst_delete(&((*tree)->left), key, keep_value);
             }
             else
             {
                 // The comparison_status value is a negative number.
-                bst_delete(&((*tree)->right), key);
+                bst_delete(&((*tree)->right), key, keep_value);
             }
         }
     }
@@ -254,7 +278,7 @@ uint8_t bst_move_node (bst_node_t* dst_tree, bst_node_t* node)
     }
 
     // Remove node from the original tree.
-    bst_delete(node, (*node)->key);
+    bst_delete(node, (*node)->key, false);
 
     return NO_ERROR;
 }
@@ -366,10 +390,11 @@ void bst_export_oldest (netflow_recording_system_t netflow_records,
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
 
-        export_flow(netflow_records,
+        export_flows(netflow_records,
                     sending_system,
-                    oldest_node->value);
-        bst_delete(tree, oldest_node->key);
+                    &(oldest_node->value),
+                    1);
+        bst_delete(tree, oldest_node->key, false);
     }
 }
 
@@ -378,15 +403,43 @@ void bst_export_all (netflow_recording_system_t netflow_records,
                      bst_node_t* tree)
 {
     bst_node_t oldest_node;
+    flow_node_t flows[MAX_FLOWS_NUMBER];
+    uint16_t flows_number = 0;
 
     while (*tree != NULL)
     {
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
 
-        export_flow(netflow_records,
-                    sending_system,
-                    oldest_node->value);
-        bst_delete(tree, oldest_node->key);
+        flows[flows_number] = oldest_node->value;
+        flows_number++;
+
+        bst_delete(tree, oldest_node->key, true);
+
+        if (flows[flows_number-1] == NULL)
+        {
+            printf("IS NULL\n");
+        }
+
+        if (flows_number == MAX_FLOWS_NUMBER)
+        {
+            export_flows(netflow_records,
+                         sending_system,
+                         flows,
+                         flows_number);
+
+            free_flow_values_array(flows, flows_number);
+            flows_number = 0;
+        }
+    }
+
+    if (flows_number > 0)
+    {
+        export_flows(netflow_records,
+                     sending_system,
+                     flows,
+                     flows_number);
+
+        free_flow_values_array(flows, flows_number);
     }
 }

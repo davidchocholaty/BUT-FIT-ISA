@@ -73,6 +73,8 @@ void free_netflow_key (netflow_v5_key_t* flow_key);
 void free_tree_node (bst_node_t* tree_node);
 void free_tree_node_keep_data (bst_node_t* tree_node);
 
+void free_flow_values_array (flow_node_t* flows, uint16_t flows_number);
+
 void free_string (char** string);
 
 void free_socket (int** socket);

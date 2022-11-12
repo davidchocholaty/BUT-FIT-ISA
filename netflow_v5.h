@@ -21,6 +21,8 @@
 #include "option.h"
 #include "tree.h"
 
+#define MAX_FLOWS_NUMBER 30
+
 typedef struct netflow_v5_header* netflow_v5_header_t;
 typedef struct netflow_v5_flow_record* netflow_v5_flow_record_t;
 typedef struct netflow_v5_key* netflow_v5_key_t;
@@ -114,9 +116,10 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
 
-uint8_t export_flow (netflow_recording_system_t netflow_records,
-                     netflow_sending_system_t sending_system,
-                     flow_node_t flow_export);
+uint8_t export_flows (netflow_recording_system_t netflow_records,
+                      netflow_sending_system_t sending_system,
+                      flow_node_t* flows,
+                      const uint16_t flows_number);
 
 void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
                                     netflow_sending_system_t sending_system);
