@@ -48,6 +48,7 @@
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
 #define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
                          sizeof(struct flow_node))
+#define DEFAULT_PORT 2055
 
 uint8_t export_flow (netflow_recording_system_t netflow_records,
                      netflow_sending_system_t sending_system,
@@ -158,12 +159,11 @@ uint8_t connect_socket (int* sock, char* source)
     char* source_name = NULL;
     char* source_port = NULL;
 
-    long int port_numeric;
+    uint16_t port_numeric;
 
     status = parse_name_port(source, &source_name, &source_port);
 
     printf("name: %s\n", source_name);
-    printf("port: %s\n", source_port);
 
     if (status != NO_ERROR)
     {
@@ -196,7 +196,15 @@ uint8_t connect_socket (int* sock, char* source)
             return INVALID_OPTION_ERROR;
         }
 
-        server.sin_port = htons((uint16_t)port_numeric);        // server port (network byte order)
+        server.sin_port = htons(port_numeric);        // server port (network byte order)
+
+        printf("port: %hu\n", port_numeric);
+    }
+    else
+    {
+        server.sin_port = htons(DEFAULT_PORT);
+
+        printf("port: %d\n", DEFAULT_PORT);
     }
 
     //create a client socket
