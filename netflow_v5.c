@@ -321,8 +321,9 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         // Add flow into the flows tree.
         status = bst_insert(flows_tree, new_key, new_flow);
 
-        // Handle the cache size.
-        if (*(netflow_records->cached_flows_number) + 1 ==
+        // Handle the cache size. If exceeded, the oldest record
+        // will be exported.
+        if (*(netflow_records->cached_flows_number) ==
         options->cached_entries_number->entries_number)
         {
             bst_export_oldest(netflow_records, sending_system, flows_tree);
