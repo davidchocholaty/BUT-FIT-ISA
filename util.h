@@ -47,9 +47,9 @@ uint32_t strtoui_32 (char* string);
  * @param min   Minimum range value.
  * @param max   Maximum range value.
  */
-bool in_range (const unsigned int value,
-               const unsigned int min,
-               const unsigned int max);
+bool in_range (unsigned int value,
+               unsigned int min,
+               unsigned int max);
 
 uint8_t parse_name_port (char* in_source, char** out_name, char** out_port);
 

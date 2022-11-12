@@ -69,7 +69,7 @@ uint8_t init_options (options_t* options)
  */
 void print_help (char* program_name)
 {
-    printf("TODO help message %s", program_name);
+    printf("TODO help message %s\n", program_name);
 }
 
 /*
@@ -190,9 +190,10 @@ uint8_t parse_options (int argc, char* argv[], options_t options)
                     // Check if the value is in the allowed range. At the same time,
                     // it is checked if the input value was possible to convert
                     // to an unsigned int data type.
-                    if (!in_range(options->active_entries_timeout->timeout_seconds,
+                    if (!in_range((unsigned int)options->active_entries_timeout->timeout_seconds,
                                   ACTIVE_TIMEOUT_MIN, ACTIVE_TIMEOUT_MAX))
                     {
+                        printf("returning error\n");
                         return ACTIVE_RANGE_ERROR;
                     }
                 }
@@ -218,7 +219,7 @@ uint8_t parse_options (int argc, char* argv[], options_t options)
                     // Check if the value is in the allowed range. At the same time,
                     // it is checked if the input value was possible to convert
                     // to an unsigned int data type.
-                    if (!in_range(options->inactive_entries_timeout->timeout_seconds,
+                    if (!in_range((unsigned int)options->inactive_entries_timeout->timeout_seconds,
                                   INACTIVE_TIMEOUT_MIN, INACTIVE_TIMEOUT_MAX))
                     {
                         return INACTIVE_RANGE_ERROR;
@@ -246,7 +247,7 @@ uint8_t parse_options (int argc, char* argv[], options_t options)
                     // Check if the value is in the allowed range. At the same time,
                     // it is checked if the input value was possible to convert
                     // to an unsigned int data type.
-                    if (!in_range(options->cached_entries_number->entries_number,
+                    if (!in_range((unsigned int)options->cached_entries_number->entries_number,
                                   ENTRIES_NUMBER_MIN, ENTRIES_NUMBER_MAX))
                     {
                         return ENTRIES_NUMBER_ERROR;
