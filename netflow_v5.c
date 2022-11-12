@@ -72,7 +72,6 @@ uint8_t export_flow (netflow_recording_system_t netflow_records,
 
     header->version = htons(version);
     header->count = htons(flows_count);
-    // TODO fix time difference in one
     header->sysuptime_ms = htonl(get_timeval_ms(netflow_records->last_packet_time,
                                                 netflow_records->first_packet_time));
     header->unix_secs = htonl(netflow_records->last_packet_time->tv_sec);
