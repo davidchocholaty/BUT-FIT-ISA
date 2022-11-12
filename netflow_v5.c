@@ -37,6 +37,7 @@
 #include "error.h"
 #include "memory.h"
 #include "tree.h"
+#include "util.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
 #define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
@@ -150,7 +151,6 @@ uint8_t connect_socket (int* sock, char* source)
     uint8_t status = NO_ERROR;
     char* source_name = NULL;
     char* source_port = NULL;
-    char* end;
 
     long int port_numeric;
 
@@ -183,9 +183,9 @@ uint8_t connect_socket (int* sock, char* source)
 
     if (source_port != NULL)
     {
-        port_numeric = strtol(source_port, &end, 10);
+        port_numeric = strtoui_16(source_port);
 
-        if (port_numeric == 0L)
+        if (port_numeric == 0)
         {
             return INVALID_OPTION_ERROR;
         }
