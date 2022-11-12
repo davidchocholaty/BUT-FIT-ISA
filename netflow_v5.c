@@ -47,7 +47,7 @@
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
 #define MAX_PACKET_SIZE (sizeof(struct netflow_v5_header) + \
-                         sizeof(struct flow_node))
+                         sizeof(struct netflow_v5_flow_record))
 #define DEFAULT_PORT 2055
 
 uint8_t export_flow (netflow_recording_system_t netflow_records,
