@@ -33,6 +33,8 @@
 #include <netinet/udp.h>
 #undef __FAVOR_BSD // For Merlin server.
 
+#include <netinet/ip_icmp.h>
+
 #include <netdb.h> // For Merlin server.
 
 #include <arpa/inet.h>
@@ -382,6 +384,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
     struct ip* my_ip = NULL;
     const struct tcphdr* my_tcp = NULL;    // pointer to the beginning of TCP header
     const struct udphdr* my_udp = NULL;    // pointer to the beginning of UDP header
+    const struct icmp* my_icmp = NULL;
     netflow_v5_key_t packet_key = NULL;
     u_int size_ip = 0;
     uint8_t tcp_flags = 0;
@@ -445,8 +448,10 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     switch (my_ip->ip_p){
         case IPPROTO_ICMP: // ICMP protocol (ICMPv4)
+            my_icmp = (struct icmp *) (packet + SIZE_ETHERNET + size_ip);
+
             packet_key->src_port = 0;
-            packet_key->dst_port = 0;
+            packet_key->dst_port = my_icmp->icmp_type * 256 + my_icmp->icmp_code;
 
             find_flow(netflow_records,
                       sending_system,
