@@ -199,12 +199,9 @@ uint8_t connect_socket (int* sock, char* source)
         return SOCKET_ERROR;
     }
 
-    printf("* Server socket created\n");
-
     //len = sizeof(server);
     //fromlen = sizeof(from);
 
-    printf("* Creating a connected UDP socket using connect()\n");
     // create a connected UDP socket
     if (connect(*sock, (struct sockaddr *)&server, sizeof(server))  == -1)
     {
@@ -220,7 +217,6 @@ uint8_t connect_socket (int* sock, char* source)
 void disconnect_socket (const int* sock)
 {
     close(*sock);
-    printf("* Closing the client socket ...\n");
 }
 
 uint8_t find_flow (netflow_recording_system_t netflow_records,

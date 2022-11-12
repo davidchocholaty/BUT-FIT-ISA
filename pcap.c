@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 
+#include "error.h"
 #include "netflow_v5.h"
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
@@ -33,12 +34,11 @@
 /*
  * TODO
  */
-void run_packets_processing (netflow_recording_system_t netflow_records,
-                             netflow_sending_system_t sending_system,
-                             options_t options)
-                             //char* input_stream)
+uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
+                                netflow_sending_system_t sending_system,
+                                options_t options)
 {
-    unsigned int packet_number;
+    uint8_t status = NO_ERROR;
     int return_code;
     char errbuf[PCAP_ERRBUF_SIZE];
     const u_char* packet;
@@ -62,95 +62,17 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
     // Open the input file.
     if ((handle = pcap_open_offline(input_stream, errbuf)) == NULL)
     {
-        // TODO handle error
+        return INVALID_INPUT_FILE_ERROR;
     }
 
-    packet_number = 0;
-/*
-    while ((return_code = pcap_next_ex(handle, &header, &packet)) > 0)
+    while (((return_code = pcap_next_ex(handle, &header, &packet)) > 0) && status == NO_ERROR)
     {
-
-        packet_number++;
-
-        // print the packet header data (pcap)
-        printf("Packet no. %d:\n",packet_number);
-        printf("\tLength %d B, received at %s", header->len, ctime((const time_t*)&header->ts.tv_sec));
-
         // read the Ethernet header
         eptr = (struct ether_header *) packet;
-        printf("\tSource MAC: %s\n",ether_ntoa((const struct ether_addr *)&eptr->ether_shost)) ;
-        printf("\tDestination MAC: %s\n",ether_ntoa((const struct ether_addr *)&eptr->ether_dhost)) ;
 
-
-
-        switch (ntohs(eptr->ether_type)){               // see /usr/include/net/ethernet.h for types
+        switch (ntohs(eptr->ether_type)){
             case ETHERTYPE_IP: // IPv4 packet
-                printf("\tEthernet type is 0x%04x, i.e., IP packet \n", ntohs(eptr->ether_type));
-                struct ip* my_ip = (struct ip*) (packet+SIZE_ETHERNET);        // skip Ethernet header
-                u_int size_ip = my_ip->ip_hl*4;                           // length of IP header
-
-                printf("\tIP: id 0x%x, hlen %d bytes, version %d, total length %d bytes, TTL %d\n",ntohs(my_ip->ip_id),size_ip,my_ip->ip_v,ntohs(my_ip->ip_len),my_ip->ip_ttl);
-                printf("\tIP src = %s, ",inet_ntoa(my_ip->ip_src));
-                printf("IP dst = %s",inet_ntoa(my_ip->ip_dst));
-
-                switch (my_ip->ip_p){
-                    case IPPROTO_ICMP: // ICMP protocol (ICMPv4)
-                        printf(", protocol ICMP (%d)\n",my_ip->ip_p);
-                        break;
-                    case IPPROTO_TCP: // TCP protocol
-                        printf(", protocol TCP (%d)\n",my_ip->ip_p);
-                        const struct tcphdr* my_tcp = (struct tcphdr *) (packet+SIZE_ETHERNET+size_ip); // pointer to the TCP header
-                        printf("\tSrc port = %d, dst port = %d, seq = %u",ntohs(my_tcp->th_sport), ntohs(my_tcp->th_dport), ntohl(my_tcp->th_seq));
-                        if (my_tcp->th_flags & TH_SYN)
-                            printf(", SYN");
-                        if (my_tcp->th_flags & TH_FIN)
-                            printf(", FIN");
-                        if (my_tcp->th_flags & TH_RST)
-                            printf(", RST");
-                        if (my_tcp->th_flags & TH_PUSH)
-                            printf(", PUSH");
-                        if (my_tcp->th_flags & TH_ACK)
-                            printf(", ACK");
-                        printf("\n");
-                        break;
-                    case IPPROTO_UDP: // UDP protocol
-                        printf(", protocol UDP (%d)\n",my_ip->ip_p);
-                        const struct udphdr* my_udp = (struct udphdr *) (packet+SIZE_ETHERNET+size_ip); // pointer to the UDP header
-                        printf("\tSrc port = %d, dst port = %d, length = %d\n",ntohs(my_udp->uh_sport), ntohs(my_udp->uh_dport), ntohs(my_udp->uh_ulen));
-                        break;
-                    default:
-                        printf(", protocol %d\n",my_ip->ip_p);
-                }
-                break;
-            default:
-                printf("\tEthernet type 0x%04x, i.e., not IP packet\n", ntohs(eptr->ether_type));
-        }
-    }
-*/
-
-
-
-    while ((return_code = pcap_next_ex(handle, &header, &packet)) > 0)
-    {
-        printf("processing packet: %d\n", packet_number);
-
-        packet_number++;
-
-        // print the packet header data (pcap)
-        //printf("Packet no. %d:\n",packet_number);
-        //printf("\tLength %d B, received at %s", header->len, ctime((const time_t*)&header->ts.tv_sec));
-
-        // read the Ethernet header
-        eptr = (struct ether_header *) packet;
-        //printf("\tSource MAC: %s\n",ether_ntoa((const struct ether_addr *)&eptr->ether_shost)) ;
-        //printf("\tDestination MAC: %s\n",ether_ntoa((const struct ether_addr *)&eptr->ether_dhost)) ;
-
-
-
-        switch (ntohs(eptr->ether_type)){               // see /usr/include/net/ethernet.h for types
-            case ETHERTYPE_IP: // IPv4 packet
-                // TODO handle return code
-                process_packet(netflow_records, sending_system, header, packet, options);
+                status = process_packet(netflow_records, sending_system, header, packet, options);
                 break;
             default:
                 break;
@@ -168,4 +90,6 @@ void run_packets_processing (netflow_recording_system_t netflow_records,
 
     // close the capture device and deallocate resources
     pcap_close(handle);
+
+    return status;
 }
