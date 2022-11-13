@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: util.c                                           */
-/* Created: 2022-10-01                                    */
-/* Last change: 2022-10-13                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -25,6 +23,7 @@
  * Function to check if the input string is only from numeric characters.
  *
  * @param string Input string for check.
+ * @return       True is the string contains only numeric value, false otherwise.
  */
 bool is_numeric_string (char* string)
 {
@@ -83,6 +82,8 @@ uint32_t strtoui_32 (char* string)
  * @param value Input value for check in range.
  * @param min   Minimum range value.
  * @param max   Maximum range value.
+ * @return      True if the specified value is in the range between min and max,
+ *              false otherwise.
  */
 bool in_range (unsigned int value,
                unsigned int min,
@@ -91,6 +92,16 @@ bool in_range (unsigned int value,
     return (value >= min) && (value <= max);
 }
 
+/*
+ * Function for parsing the collector source for the name and port separately.
+ *
+ * @param in_source The input which contains the collector source.
+ * @param out_name  The output parameter that contains the name
+ *                  of the collector.
+ * @param out_port  The output parameter that contains the port
+ *                  of the collector.
+ * @return          Status of function processing.
+ */
 uint8_t parse_name_port (char* in_source, char** out_name, char** out_port)
 {
     uint8_t status;
@@ -140,6 +151,13 @@ uint8_t parse_name_port (char* in_source, char** out_name, char** out_port)
     return NO_ERROR;
 }
 
+/*
+ * Function for returning the numeric value of a time in milliseconds.
+ *
+ * @param time              Current time value.
+ * @param first_packet_time Time of the first caught packet.
+ * @return                  The numeric time value in milliseconds.
+ */
 u_int32_t get_timeval_ms(struct timeval* time, struct timeval* first_packet_time)
 {
     struct timeval result_time;
@@ -156,6 +174,15 @@ u_int32_t get_timeval_ms(struct timeval* time, struct timeval* first_packet_time
     return ((uint32_t) result_time.tv_sec * 1000 + (uint32_t) result_time.tv_usec / 1000);
 }
 
+/*
+ * Function of comparing two time values.
+ *
+ * @param first_time  First time value.
+ * @param second_time Second time value.
+ * @return            The function returns 0 for equal times, 1 if the first
+ *                    time is greater than the second one and -1 the second time
+ *                    is greater than the first one.
+ */
 int compare_timeval (struct timeval* first_time, struct timeval* second_time)
 {
     if (first_time->tv_sec != second_time->tv_sec)
