@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: tree.c                                           */
-/* Created: 2022-10-31                                    */
-/* Last change: 2022-11-05                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -26,14 +24,29 @@
 #include "netflow_v5.h"
 #include "util.h"
 
-
-void bst_init(bst_node_t* tree) {
+/*
+ * Function for tree initialization.
+ *
+ * @param tree Pointer to pointer to binary search tree.
+ */
+void bst_init (bst_node_t* tree)
+{
     *tree = NULL;
 }
 
-bool bst_search(bst_node_t tree,
-                netflow_v5_key_t key,
-                flow_node_t *value)
+/*
+ * Function for searching the tree node in a tree by key. The found tree node
+ * value is passed out in the value parameter.
+ *
+ * @param tree  Pointer to binary search tree.
+ * @param key   Pointer to key which is searched.
+ * @param value Pointer to pointer to flow node value in which is the found
+ *              value passed out.
+ * @return      True if a node was found in the tree, false otherwise.
+ */
+bool bst_search (bst_node_t tree,
+                 netflow_v5_key_t key,
+                 flow_node_t *value)
 {
     int comparison_status;
 
@@ -58,9 +71,17 @@ bool bst_search(bst_node_t tree,
     return false;
 }
 
-uint8_t bst_insert(bst_node_t* tree,
-                   netflow_v5_key_t key,
-                   flow_node_t value)
+/*
+ * Function for inserting a tree node into the binary search tree.
+ *
+ * @param tree  Pointer to pointer to binary search tree.
+ * @param key   Inserted node key.
+ * @param value Inserted node value.
+ * @return      Status of function processing.
+ */
+uint8_t bst_insert (bst_node_t* tree,
+                    netflow_v5_key_t key,
+                    flow_node_t value)
 {
     int comparison_status;
     uint8_t status = NO_ERROR;
@@ -106,7 +127,17 @@ uint8_t bst_insert(bst_node_t* tree,
     return status;
 }
 
-void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree, bool keep_value) {
+/*
+ * The helper function for replacing the removing tree node with the rightmost child
+ * of the left tree.
+ *
+ * @param target     A target tree node which should be replaced.
+ * @param tree       Pointer to pointer to binary search tree.
+ * @param keep_value The information about if free memory for tree node value
+ *                   or not.
+ */
+void bst_replace_by_rightmost (bst_node_t target, bst_node_t* tree, bool keep_value)
+{
     bst_node_t tmp;
 
     // Tree has node right subtree
@@ -155,7 +186,19 @@ void bst_replace_by_rightmost(bst_node_t target, bst_node_t* tree, bool keep_val
     bst_replace_by_rightmost(target, &((*tree)->right), keep_value);
 }
 
-void bst_delete(bst_node_t* tree, netflow_v5_key_t key, bool keep_value) {
+/*
+ * Function for removing a tree node from the binary search tree by key.
+ * This function implementation is special in providing the keep_value parameter
+ * which provides the information about if the flow value stored in the tree node
+ * should be freed from memory or not.
+ *
+ * @param tree       Pointer to pointer to binary search tree.
+ * @param key        Inserted node key.
+ * @param keep_value The information about if free memory for tree node value
+ *                   or not.
+ */
+void bst_delete (bst_node_t* tree, netflow_v5_key_t key, bool keep_value)
+{
     bst_node_t tmp;
     int comparison_status;
 
@@ -223,7 +266,13 @@ void bst_delete(bst_node_t* tree, netflow_v5_key_t key, bool keep_value) {
     }
 }
 
-void bst_dispose(bst_node_t* tree) {
+/*
+ * Function for disposing of the whole binary search tree.
+ *
+ * @param tree Pointer to pointer to binary search tree.
+ */
+void bst_dispose (bst_node_t* tree)
+{
     if (*tree != NULL)
     {
         bst_dispose(&((*tree)->left));
@@ -233,8 +282,14 @@ void bst_dispose(bst_node_t* tree) {
     }
 }
 
-//------------------------------------------------
-
+/*
+ * The helper function for moving a tree node from one binary search tree
+ * to another one. At the same time, the node is removed from the source tree.
+ *
+ * @param dst_tree Destination tree into which is tree node moved.
+ * @param node     Tree node which should be moved into the tree.
+ * @return         Status of function processing.
+ */
 uint8_t bst_move_node (bst_node_t* dst_tree, bst_node_t* node)
 {
     uint8_t status;
@@ -283,6 +338,17 @@ uint8_t bst_move_node (bst_node_t* dst_tree, bst_node_t* node)
     return NO_ERROR;
 }
 
+/*
+ * Function for moving expired flows nodes from the tracking tree into the tree
+ * which stores tree nodes to export.
+ *
+ * @param tree               Source tree in which is expired flows are searched.
+ * @param expired_flows_tree The tree containing the expired flows to export.
+ * @param actual_time_stamp  The current timestamp of the currently last
+ *                           received packet.
+ * @param options            Pointer to options storage.
+ * @return                   Status of function processing.
+ */
 uint8_t bst_find_expired (bst_node_t* tree,
                           bst_node_t* expired_flows_tree,
                           struct timeval* actual_time_stamp,
@@ -298,21 +364,18 @@ uint8_t bst_find_expired (bst_node_t* tree,
         bst_find_expired(&((*tree)->right), expired_flows_tree, actual_time_stamp, options);
 
         if ((actual_time_stamp->tv_sec - (*tree)->value->first->tv_sec) >
-            options->active_entries_timeout->timeout_seconds) // Active timer check
+            options->active_entries_timeout->timeout_seconds) // Active timer check.
         {
-            //printf("exporting because of ACTIVE timer\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
         else if (actual_time_stamp->tv_sec - (*tree)->value->last->tv_sec >
-            options->inactive_entries_timeout->timeout_seconds) // Inactive timer check
+            options->inactive_entries_timeout->timeout_seconds) // Inactive timer check.
         {
-            //printf("exporting because of INACTIVE timer\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
         else if (((*tree)->value->tcp_flags & TH_RST) ||
-        ((*tree)->value->tcp_flags & TH_FIN))
+        ((*tree)->value->tcp_flags & TH_FIN)) // TCP flags check.
         {
-            //printf("exporting because of TCP flags\n");
             status = bst_move_node(expired_flows_tree, tree);
         }
     }
@@ -320,8 +383,20 @@ uint8_t bst_find_expired (bst_node_t* tree,
     return status;
 }
 
+/*
+ * Function for finding the oldest node in the binary search tree by time value,
+ * eventually by flow node id.
+ *
+ * @param tree
+ * @param oldest_node Pointer to pointer to the storage of the oldest node
+ *                    in the tree. Before the function call the oldest node
+ *                    is the root node of the tree. After processing
+ *                    the function it contains the oldest node in a provided
+ *                    tree.
+ * @return            Time of the currently oldest node in the tree due to
+ *                    recursion calls.
+ */
 // https://stackoverflow.com/questions/11728191/how-to-create-a-function-that-returns-smallest-value-of-an-unordered-binary-tree
-//struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
 struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
 {
     int comparison_status;
@@ -366,7 +441,7 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
                     {
                         if (compare_node_id - oldest_node_id > (UINT64_MAX >> 1))
                         {
-                            // Startsi je s VYSSIM ID
+                            // The older flow is with a higher id.
                             *oldest_node = compare_node;
                         }
                     }
@@ -375,7 +450,7 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
                         // oldest_node_id > compare_node_id
                         if (oldest_node_id - compare_node_id <= (UINT64_MAX >> 1))
                         {
-                            // Startsi je s NIZSIM ID
+                            // The older flow is with a lower id.
                             *oldest_node = compare_node;
                         }
                     }
@@ -412,7 +487,7 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
                     {
                         if (compare_node_id - oldest_node_id > (UINT64_MAX >> 2))
                         {
-                            // Older node is the node with a higher id.
+                            // The older flow is with a higher id.
                             *oldest_node = compare_node;
                         }
                     }
@@ -421,7 +496,7 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
                         // oldest_node_id > compare_node_id
                         if (oldest_node_id - compare_node_id <= (UINT64_MAX >> 2))
                         {
-                            // Older node is the node with a lower id.
+                            // The older flow is with a lower id.
                             *oldest_node = compare_node;
                         }
                     }
@@ -433,6 +508,14 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
     return time;
 }
 
+/*
+ * Function for exporting the oldest node from the tree.
+ *
+ * @param netflow_records Pointer to pointer to the netflow recording system.
+ * @param sending_system  Pointer to pointer to the sending system.
+ * @param tree            Pointer to pointer to the binary search tree.
+ * @return                Status of function processing.
+ */
 uint8_t bst_export_oldest (netflow_recording_system_t netflow_records,
                            netflow_sending_system_t sending_system,
                            bst_node_t* tree)
@@ -455,6 +538,14 @@ uint8_t bst_export_oldest (netflow_recording_system_t netflow_records,
     return status;
 }
 
+/*
+ * Function for exporting all flows stored in the tree.
+ *
+ * @param netflow_records Pointer to pointer to the netflow recording system.
+ * @param sending_system  Pointer to pointer to the sending system.
+ * @param tree            Pointer to pointer to the binary search tree.
+ * @return                Status of function processing.
+ */
 uint8_t bst_export_all (netflow_recording_system_t netflow_records,
                         netflow_sending_system_t sending_system,
                         bst_node_t* tree)
