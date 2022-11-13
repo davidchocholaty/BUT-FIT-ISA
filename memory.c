@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: memory.c                                         */
-/* Created: 2022-10-26                                    */
-/* Last change: 2022-10-26                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -36,6 +34,10 @@ bool is_allocated (void* ptr)
 
     return true;
 }
+
+/**********************************************************/
+/*                       ALLOCATIONS                      */
+/**********************************************************/
 
 /*
  * Function for allocating memory for the options structure
@@ -95,8 +97,9 @@ uint8_t allocate_options (options_t* options)
 /*
  * Function for allocating memory the string.
  *
- * @param string Pointer to pointer to string.
- * @return       Status of function processing.
+ * @param string            Pointer to pointer to string.
+ * @param characters_number The number of characters in a string.
+ * @return                  Status of function processing.
  */
 uint8_t allocate_string (char** string, size_t characters_number)
 {
@@ -110,6 +113,12 @@ uint8_t allocate_string (char** string, size_t characters_number)
     return EXIT_SUCCESS;
 }
 
+/*
+ * Function for allocating the socket.
+ *
+ * @param socket Pointer to pointer to the storage of the socket value.
+ * @return       Status of function processing.
+ */
 uint8_t allocate_socket (int** socket)
 {
     *socket = (int*) malloc(sizeof(int));
@@ -122,6 +131,12 @@ uint8_t allocate_socket (int** socket)
     return EXIT_SUCCESS;
 }
 
+/*
+ * Function for allocating the whole program recording system.
+ *
+ * @param netflow_records Pointer to pointer to the storage of the system.
+ * @return                Status of function processing.
+ */
 uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
 {
     *netflow_records =
@@ -161,6 +176,12 @@ uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
     return EXIT_SUCCESS;
 }
 
+/*
+ * Function for allocating the whole program sending system.
+ *
+ * @param netflow_records Pointer to pointer to the storage of the system.
+ * @return                Status of function processing.
+ */
 uint8_t allocate_sending_system (netflow_sending_system_t* sending_system)
 {
     *sending_system =
@@ -179,6 +200,33 @@ uint8_t allocate_sending_system (netflow_sending_system_t* sending_system)
     return EXIT_SUCCESS;
 }
 
+/*
+ * Function for allocating the flow key whose value is stored in a node
+ * in a tree.
+ *
+ * @param flow_key Pointer to pointer to the storage of flow key.
+ * @return         Status of function processing.
+ */
+uint8_t allocate_netflow_key (netflow_v5_key_t* flow_key)
+{
+    *flow_key =
+            (netflow_v5_key_t) malloc(sizeof(struct netflow_v5_key));
+
+    if (!is_allocated(flow_key))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+/*
+ * Function for allocating the flow record whose value is stored in a node
+ * in a tree.
+ *
+ * @param flow_record Pointer to pointer to the storage of flow record.
+ * @return            Status of function processing.
+ */
 uint8_t allocate_flow_node (flow_node_t* flow_record)
 {
     *flow_record =
@@ -208,19 +256,12 @@ uint8_t allocate_flow_node (flow_node_t* flow_record)
     return EXIT_SUCCESS;
 }
 
-uint8_t allocate_netflow_key (netflow_v5_key_t* flow_key)
-{
-    *flow_key =
-            (netflow_v5_key_t) malloc(sizeof(struct netflow_v5_key));
-
-    if (!is_allocated(flow_key))
-    {
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
-}
-
+/*
+ * Function for allocating the tree node.
+ *
+ * @param tree Pointer to pointer to the storage of a tree node.
+ * @return     Status of function processing.
+ */
 uint8_t allocate_tree_node (bst_node_t* tree_node)
 {
     *tree_node =
@@ -234,89 +275,9 @@ uint8_t allocate_tree_node (bst_node_t* tree_node)
     return EXIT_SUCCESS;
 }
 
-void free_flow_node (flow_node_t* flow_record)
-{
-    if (is_allocated(*flow_record))
-    {
-        if (is_allocated((*flow_record)->first))
-        {
-            free((*flow_record)->first);
-            (*flow_record)->first = NULL;
-        }
-
-        if (is_allocated((*flow_record)->last))
-        {
-            free((*flow_record)->last);
-            (*flow_record)->last = NULL;
-        }
-
-        free(*flow_record);
-        *flow_record = NULL;
-    }
-}
-
-void free_netflow_key (netflow_v5_key_t* flow_key)
-{
-    if (is_allocated(*flow_key))
-    {
-        free(*flow_key);
-        *flow_key = NULL;
-    }
-}
-
-void free_tree_node (bst_node_t* tree_node)
-{
-    if (is_allocated(*tree_node))
-    {
-        if (is_allocated((*tree_node)->key))
-        {
-            free_netflow_key(&((*tree_node)->key));
-        }
-
-        if (is_allocated((*tree_node)->value))
-        {
-            free_flow_node(&((*tree_node)->value));
-        }
-
-        free(*tree_node);
-        *tree_node = NULL;
-    }
-}
-
-void free_tree_node_keep_data (bst_node_t* tree_node)
-{
-    if (is_allocated(*tree_node))
-    {
-        free(*tree_node);
-        *tree_node = NULL;
-    }
-}
-
-void free_flow_values_array (flow_node_t* flows, uint16_t flows_number)
-{
-    for (uint16_t i = 0; i < flows_number; i++)
-    {
-        free_flow_node(&(flows[i]));
-    }
-}
-
-void free_string (char** string)
-{
-    if (is_allocated(*string))
-    {
-        free(*string);
-        *string = NULL;
-    }
-}
-
-void free_socket (int** socket)
-{
-    if (is_allocated(*socket))
-    {
-        free(*socket);
-        *socket = NULL;
-    }
-}
+/**********************************************************/
+/*                          FREES                         */
+/**********************************************************/
 
 /*
  * Function for freeing memory which was allocated for the options structure
@@ -359,6 +320,136 @@ void free_options_mem (options_t* options)
     }
 }
 
+/*
+ * Function for freeing memory which was allocated for the netflow key.
+ *
+ * @param flow_key Pointer to pointer to the storage of netflow key.
+ */
+void free_netflow_key (netflow_v5_key_t* flow_key)
+{
+    if (is_allocated(*flow_key))
+    {
+        free(*flow_key);
+        *flow_key = NULL;
+    }
+}
+
+/*
+ * Function for freeing memory which was allocated for the flow node.
+ *
+ * @param flow_record Pointer to pointer to the storage of flow record.
+ */
+void free_flow_node (flow_node_t* flow_record)
+{
+    if (is_allocated(*flow_record))
+    {
+        if (is_allocated((*flow_record)->first))
+        {
+            free((*flow_record)->first);
+            (*flow_record)->first = NULL;
+        }
+
+        if (is_allocated((*flow_record)->last))
+        {
+            free((*flow_record)->last);
+            (*flow_record)->last = NULL;
+        }
+
+        free(*flow_record);
+        *flow_record = NULL;
+    }
+}
+
+/*
+ * Function for freeing memory which was allocated for the tree node.
+ *
+ * @param flow_record Pointer to pointer to the storage of tree node.
+ */
+void free_tree_node (bst_node_t* tree_node)
+{
+    if (is_allocated(*tree_node))
+    {
+        if (is_allocated((*tree_node)->key))
+        {
+            free_netflow_key(&((*tree_node)->key));
+        }
+
+        if (is_allocated((*tree_node)->value))
+        {
+            free_flow_node(&((*tree_node)->value));
+        }
+
+        free(*tree_node);
+        *tree_node = NULL;
+    }
+}
+
+/*
+ * Function for freeing memory which was allocated for the tree node.
+ * The difference is that this function does not free the allocated memory
+ * for the key and flow value stored in the tree node.
+ *
+ * @param flow_record Pointer to pointer to the storage of tree node.
+ */
+void free_tree_node_keep_data (bst_node_t* tree_node)
+{
+    if (is_allocated(*tree_node))
+    {
+        free(*tree_node);
+        *tree_node = NULL;
+    }
+}
+
+/*
+ * Function for freeing memory for flow node values which were stored
+ * in an array.
+ *
+ * @param flows        An array containing flow node values.
+ * @param flows_number The number of flow node values in the array.
+ */
+void free_flow_values_array (flow_node_t* flows, uint16_t flows_number)
+{
+    for (uint16_t i = 0; i < flows_number; i++)
+    {
+        free_flow_node(&(flows[i]));
+    }
+}
+
+/*
+ * Function for freeing memory which was allocated for the string.
+ *
+ * @param string Pointer to pointer to the storage of string.
+ */
+void free_string (char** string)
+{
+    if (is_allocated(*string))
+    {
+        free(*string);
+        *string = NULL;
+    }
+}
+
+/*
+ * Function for freeing memory which was allocated for the socket.
+ *
+ * @param string Pointer to pointer to the storage of socket.
+ */
+void free_socket (int** socket)
+{
+    if (is_allocated(*socket))
+    {
+        free(*socket);
+        *socket = NULL;
+    }
+}
+
+/*
+ * Function for freeing memory which was allocated for the netflow
+ * recording system.
+ *
+ * @param netflow_records Pointer to pointer to the storage
+ *                        of the netflow recording system.
+ */
 void free_recording_system (netflow_recording_system_t* netflow_records)
 {
     if (is_allocated(*netflow_records))
@@ -386,6 +477,12 @@ void free_recording_system (netflow_recording_system_t* netflow_records)
     }
 }
 
+/*
+ * Function for freeing memory which was allocated for the sending system.
+ *
+ * @param sending_system  Pointer to pointer to the storage
+ *                        of the sending system.
+ */
 void free_sending_system (netflow_sending_system_t* sending_system)
 {
     if (is_allocated(*sending_system))
@@ -400,6 +497,16 @@ void free_sending_system (netflow_sending_system_t* sending_system)
     }
 }
 
+/*
+ * Function for freeing the whole allocated memory in the program at the end
+ * of the program.
+ *
+ * @param options         Pointer to pointer to options storage.
+ * @param netflow_records Pointer to pointer to the storage
+ *                        of the netflow recording system.
+ * @param sending_system  Pointer to pointer to the storage
+ *                        of the sending system.
+ */
 void free_allocated_mem (options_t* options,
                          netflow_recording_system_t* netflow_records,
                          netflow_sending_system_t* sending_system)
