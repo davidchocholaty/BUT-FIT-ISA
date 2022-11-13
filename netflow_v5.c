@@ -425,7 +425,6 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
     packet_key->tos = my_ip->ip_tos;
 
     /********* IP addresses *********/
-    // TODO maybe some check on ip address
     packet_key->src_addr = my_ip->ip_src.s_addr;
     packet_key->dst_addr = my_ip->ip_dst.s_addr;
 
