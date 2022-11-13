@@ -433,10 +433,11 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
     return time;
 }
 
-void bst_export_oldest (netflow_recording_system_t netflow_records,
-                        netflow_sending_system_t sending_system,
-                        bst_node_t* tree)
+uint8_t bst_export_oldest (netflow_recording_system_t netflow_records,
+                           netflow_sending_system_t sending_system,
+                           bst_node_t* tree)
 {
+    uint8_t status = NO_ERROR;
     bst_node_t oldest_node;
 
     if (*tree != NULL)
@@ -444,19 +445,21 @@ void bst_export_oldest (netflow_recording_system_t netflow_records,
         oldest_node = *tree;
         bst_find_oldest(tree, &oldest_node);
 
-        // TODO return status
-        export_flows(netflow_records,
-                    sending_system,
-                    &(oldest_node->value),
-                    1);
+        status = export_flows(netflow_records,
+                              sending_system,
+                              &(oldest_node->value),
+                              1);
         bst_delete(tree, oldest_node->key, false);
     }
+
+    return status;
 }
 
-void bst_export_all (netflow_recording_system_t netflow_records,
-                     netflow_sending_system_t sending_system,
-                     bst_node_t* tree)
+uint8_t bst_export_all (netflow_recording_system_t netflow_records,
+                        netflow_sending_system_t sending_system,
+                        bst_node_t* tree)
 {
+    uint8_t status = NO_ERROR;
     bst_node_t oldest_node;
     flow_node_t flows[MAX_FLOWS_NUMBER];
     uint16_t flows_number = 0;
@@ -473,25 +476,35 @@ void bst_export_all (netflow_recording_system_t netflow_records,
 
         if (flows_number == MAX_FLOWS_NUMBER)
         {
-            // TODO return status
-            export_flows(netflow_records,
-                         sending_system,
-                         flows,
-                         flows_number);
+            status = export_flows(netflow_records,
+                                  sending_system,
+                                  flows,
+                                  flows_number);
 
             free_flow_values_array(flows, flows_number);
             flows_number = 0;
+
+            if (status != NO_ERROR)
+            {
+                break;
+            }
         }
     }
 
     if (flows_number > 0)
     {
-        // TODO return status
-        export_flows(netflow_records,
-                     sending_system,
-                     flows,
-                     flows_number);
+        status = export_flows(netflow_records,
+                              sending_system,
+                              flows,
+                              flows_number);
 
         free_flow_values_array(flows, flows_number);
     }
+
+    if (status != NO_ERROR)
+    {
+        bst_dispose(tree);
+    }
+
+    return status;
 }

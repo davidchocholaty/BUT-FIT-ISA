@@ -84,14 +84,6 @@ uint8_t set_default_if_not_user_set (options_t options)
     uint8_t status;
     static const char* default_collector_source = "127.0.0.1:2055";
 
-    // TODO on the other place
-    // If the name of the analyzed file was not entered the input will be read
-    // from the stdin.
-    //if (!options->analyzed_input_source->is_user_set)
-    //{
-    //    options->analyzed_input_source->source = stdin;
-    //}
-
     // If the netflow collector was not entered the source 127.0.0.1:2055 is set
     // as a netflow collector source.
     if (!options->netflow_collector_source->is_user_set)
@@ -300,13 +292,6 @@ uint8_t handle_options (int argc, char* argv[], options_t* options)
     if (status != NO_ERROR)
     {
         print_error(status, argv[0]);
-
-        // TODO if the file opening will be move move this too.
-        // Close file if possible
-        //if (options->analyzed_input_source->source != NULL)
-        //{
-        //    fclose(options->analyzed_input_source->source);
-        //}
 
         free_options_mem(options);
 

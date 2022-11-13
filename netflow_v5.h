@@ -122,8 +122,8 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
                       flow_node_t* flows,
                       const uint16_t flows_number);
 
-void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
-                                    netflow_sending_system_t sending_system);
+uint8_t export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
+                                       netflow_sending_system_t sending_system);
 
 uint8_t connect_socket (int* sock, char* source);
 

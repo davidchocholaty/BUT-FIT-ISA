@@ -38,6 +38,7 @@ void print_error (uint8_t error, char* program_name)
         "closing input file error",
         "error while handling memory",
         "error while handling socket",
+        "error while handling pcap",
         "error while sending packet",
         "unknown error"
     };

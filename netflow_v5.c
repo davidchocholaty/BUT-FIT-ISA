@@ -120,16 +120,19 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
     return NO_ERROR;
 }
 
-void export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
-                                    netflow_sending_system_t sending_system)
+uint8_t export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
+                                       netflow_sending_system_t sending_system)
 {
+    uint8_t status = NO_ERROR;
     bst_node_t* tree = &(netflow_records->tree);
 
     if (tree != NULL)
     {
-        bst_export_all(netflow_records , sending_system, tree);
+        status = bst_export_all(netflow_records , sending_system, tree);
         //bst_dispose(tree);
     }
+
+    return status;
 }
 
 uint8_t connect_socket (int* sock, char* source)
@@ -229,7 +232,6 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
     flow_node_t flow = NULL;
     bst_node_t* flows_tree = &(netflow_records->tree);
 
-
     if (!bst_search(*flows_tree, packet_key, &flow))
     {
         // Matching flow does not exist.
@@ -289,16 +291,26 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         if (*(netflow_records->cached_flows_number) >
         options->cached_entries_number->entries_number)
         {
-            bst_export_oldest(netflow_records, sending_system, flows_tree);
+            status = bst_export_oldest(netflow_records, sending_system, flows_tree);
         }
 
-        new_flow->cache_id = cache_id;
+        if (status == NO_ERROR)
+        {
+            new_flow->cache_id = cache_id;
 
-        // Add flow into the flows tree.
-        status = bst_insert(flows_tree, new_key, new_flow);
+            // Add flow into the flows tree.
+            status = bst_insert(flows_tree, new_key, new_flow);
 
-        // Update the next id value.
-        cache_id = (cache_id + 1) & id_mask;
+            // Update the next id value.
+            cache_id = (cache_id + 1) & id_mask;
+        }
+        else
+        {
+            free_netflow_key(&new_key);
+            free_flow_node(&new_flow);
+
+            bst_dispose(flows_tree);
+        }
     }
     else
     {
@@ -336,9 +348,14 @@ uint8_t export_expired_flows(netflow_recording_system_t netflow_records,
     }
 
     // Export all flows from the expired flows tree by the oldest one.
-    bst_export_all(netflow_records, sending_system, &expired_flows_tree);
+    status = bst_export_all(netflow_records, sending_system, &expired_flows_tree);
 
-    return NO_ERROR;
+    if (status != NO_ERROR)
+    {
+        bst_dispose(&(netflow_records->tree));
+    }
+
+    return status;
 }
 
 uint8_t process_packet (netflow_recording_system_t netflow_records,
@@ -421,13 +438,13 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             packet_key->src_port = 0;
             packet_key->dst_port = my_icmp->icmp_type * 256 + my_icmp->icmp_code;
 
-            find_flow(netflow_records,
-                      sending_system,
-                      packet_key,
-                      &packet_time_stamp,
-                      packet_layer_3_bytes,
-                      tcp_flags,
-                      options);
+            status = find_flow(netflow_records,
+                               sending_system,
+                               packet_key,
+                               &packet_time_stamp,
+                               packet_layer_3_bytes,
+                               tcp_flags,
+                               options);
             break;
         case IPPROTO_TCP: // TCP protocol
             my_tcp = (struct tcphdr *) (packet + SIZE_ETHERNET + size_ip); // pointer to the TCP header
@@ -437,13 +454,13 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
             tcp_flags = my_tcp->th_flags;
 
-            find_flow(netflow_records,
-                      sending_system,
-                      packet_key,
-                      &packet_time_stamp,
-                      packet_layer_3_bytes,
-                      tcp_flags,
-                      options);
+            status = find_flow(netflow_records,
+                               sending_system,
+                               packet_key,
+                               &packet_time_stamp,
+                               packet_layer_3_bytes,
+                               tcp_flags,
+                               options);
             break;
         case IPPROTO_UDP: // UDP protocol
             my_udp = (struct udphdr *) (packet+SIZE_ETHERNET+size_ip); // pointer to the UDP header
@@ -451,13 +468,13 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             packet_key->src_port = ntohs(my_udp->uh_sport);
             packet_key->dst_port = ntohs(my_udp->uh_dport);
 
-            find_flow(netflow_records,
-                      sending_system,
-                      packet_key,
-                      &packet_time_stamp,
-                      packet_layer_3_bytes,
-                      tcp_flags,
-                      options);
+            status = find_flow(netflow_records,
+                               sending_system,
+                               packet_key,
+                               &packet_time_stamp,
+                               packet_layer_3_bytes,
+                               tcp_flags,
+                               options);
             break;
         default:
             break;
@@ -465,7 +482,7 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
 
     free_netflow_key(&packet_key);
 
-    return NO_ERROR;
+    return status;
 }
 
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)

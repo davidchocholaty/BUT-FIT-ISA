@@ -34,7 +34,9 @@ uint8_t flow_epilogue (options_t options,
                        netflow_recording_system_t netflow_records,
                        netflow_sending_system_t sending_system)
 {
-    export_all_flows_dispose_tree(netflow_records, sending_system);
+    uint8_t status;
+
+    status = export_all_flows_dispose_tree(netflow_records, sending_system);
 
     if (sending_system != NULL && sending_system->socket)
     {
@@ -43,7 +45,7 @@ uint8_t flow_epilogue (options_t options,
 
     free_allocated_mem(&options, &netflow_records, &sending_system);
 
-    return NO_ERROR;
+    return status;
 }
 
 uint8_t run_exporter (options_t options,

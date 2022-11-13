@@ -56,14 +56,14 @@ uint8_t bst_find_expired (bst_node_t* tree,
                           struct timeval* actual_time_stamp,
                           options_t options);
 
-void bst_export_all (struct netflow_recording_system* netflow_records,
-                     struct netflow_sending_system* sending_system,
-                     bst_node_t* tree);
+uint8_t bst_export_all (struct netflow_recording_system* netflow_records,
+                        struct netflow_sending_system* sending_system,
+                        bst_node_t* tree);
 
 struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node);
 
-void bst_export_oldest (struct netflow_recording_system* netflow_records,
-                        struct netflow_sending_system* sending_system,
-                        bst_node_t* tree);
+uint8_t bst_export_oldest (struct netflow_recording_system* netflow_records,
+                           struct netflow_sending_system* sending_system,
+                           bst_node_t* tree);
 
 #endif // FLOW_TREE_H
