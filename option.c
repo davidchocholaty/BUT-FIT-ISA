@@ -71,7 +71,7 @@ void print_help (char* program_name)
 }
 
 /*
- * Set default value for the netflow collector source if it is not specified
+ * Set default value for the NetFlow collector source if it is not specified.
  * by user.
  *
  * @param options  Pointer to options storage.
@@ -82,8 +82,8 @@ uint8_t set_default_if_not_user_set (options_t options)
     uint8_t status;
     static const char* default_collector_source = "127.0.0.1:2055";
 
-    // If the netflow collector was not entered the source 127.0.0.1:2055 is set
-    // as a netflow collector source.
+    // If the NetFlow collector was not entered the source 127.0.0.1:2055 is set
+    // as a NetFlow collector source.
     if (!options->netflow_collector_source->is_user_set)
     {
         status = allocate_string(&(options->netflow_collector_source->source),

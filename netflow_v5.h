@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: netflow_v5.h                                     */
-/* Created: 2022-10-27                                    */
-/* Last change: 2022-10-27                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -32,6 +30,9 @@ typedef struct netflow_sending_system* netflow_sending_system_t;
 
 struct bst_node; // Forward declaration
 
+/*
+ * Structure to store a NetFlow header.
+ */
 struct netflow_v5_header
 {
     uint16_t version;
@@ -45,6 +46,9 @@ struct netflow_v5_header
     uint16_t sampling_interval;
 };
 
+/*
+ * Structure to store exported NetFlow record.
+ */
 struct netflow_v5_flow_record
 {
     uint32_t src_addr;
@@ -69,6 +73,9 @@ struct netflow_v5_flow_record
     uint16_t pad2;
 };
 
+/*
+ * Structure to store NetFlow key.
+ */
 struct netflow_v5_key
 {
     uint16_t input;
@@ -80,6 +87,9 @@ struct netflow_v5_key
     uint8_t tos;
 };
 
+/*
+ * Structure to store exported NetFlow records in format for a tree.
+ */
 struct flow_node
 {
     uint32_t src_addr;
@@ -96,6 +106,9 @@ struct flow_node
     uint64_t cache_id;
 };
 
+/*
+ * Structure to store the NetFlow recording system for the program.
+ */
 struct netflow_recording_system
 {
     struct bst_node* tree;
@@ -104,29 +117,100 @@ struct netflow_recording_system
     uint64_t* cached_flows_number;
 };
 
+/*
+ * Structure to store the sending system for the program.
+ */
 struct netflow_sending_system
 {
     int* socket;
 };
 
-uint8_t process_packet (netflow_recording_system_t netflow_records,
-                        netflow_sending_system_t sending_system,
-                        const struct pcap_pkthdr* header,
-                        const u_char* packet,
-                        options_t options);
-
+/*
+ * Function for comparing flows by their keys.
+ *
+ * @param first_flow  First flow key.
+ * @param second_flow Second flow key.
+ * @return            The function returns 0 if the keys are equal, 1 if
+ *                    a specific value is greater in first flow key,
+ *                    -1 if a specific value is greater in second flow key.
+ */
 int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow);
 
+/*
+ * Function for exporting flows to collector.
+ *
+ * @param netflow_records Pointer to pointer to the netflow recording system.
+ * @param sending_system  Pointer to pointer to the sending system.
+ * @param flows           An array of flows to export.
+ * @param flows_number    The number of flows in the array of flows to export.
+ * @return                Status of function processing.
+ */
 uint8_t export_flows (netflow_recording_system_t netflow_records,
                       netflow_sending_system_t sending_system,
                       flow_node_t* flows,
                       const uint16_t flows_number);
 
+/*
+ * Function for exporting expired flows to collector.
+ *
+ * @param netflow_records   Pointer to pointer to the netflow recording system.
+ * @param sending_system    Pointer to pointer to the sending system.
+ * @param packet_time_stamp Current packet time stamp.
+ * @param options           Pointer to options storage.
+ * @return                  Status of function processing.
+ */
+uint8_t export_expired_flows(netflow_recording_system_t netflow_records,
+                             netflow_sending_system_t sending_system,
+                             struct timeval* packet_time_stamp,
+                             options_t options);
+
+/*
+ * Function for exporting all active cached flows and disposing of a tree.
+ *
+ * @param netflow_records   Pointer to pointer to the netflow recording system.
+ * @param sending_system    Pointer to pointer to the sending system.
+ * @return                  Status of function processing.
+ */
 uint8_t export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
                                        netflow_sending_system_t sending_system);
 
-uint8_t connect_socket (int* sock, char* source);
+/*
+ * Function for handling the new packet. The function finds the flow
+ * with the same parameters as the packet or creates a new one.
+ *
+ * @param netflow_records      Pointer to pointer to the netflow recording
+ *                             system.
+ * @param sending_system       Pointer to pointer to the sending system.
+ * @param packet_key           The NetFlow key format of a packet.
+ * @param packet_time_stamp    Current packet time stamp.
+ * @param packet_layer_3_bytes The number of Layer 3 bytes in the packet.
+ * @param packet_tcp_flags     TCP flags of the current packet.
+ * @param options              Pointer to options storage.
+ * @return                     Status of function processing.
+ */
+uint8_t find_flow (netflow_recording_system_t netflow_records,
+                   netflow_sending_system_t sending_system,
+                   netflow_v5_key_t packet_key,
+                   const struct timeval* packet_time_stamp,
+                   const uint16_t packet_layer_3_bytes,
+                   const uint8_t packet_tcp_flags,
+                   options_t options);
 
-void disconnect_socket (const int* sock);
+/*
+ * Function for handling and processing packet data including calls of functions
+ * responsible for managing flows.
+ *
+ * @param netflow_records   Pointer to pointer to the netflow recording system.
+ * @param sending_system    Pointer to pointer to the sending system.
+ * @param header            Packet header data.
+ * @param packet            Packet body data.
+ * @param options           Pointer to options storage.
+ * @return                  Status of function processing.
+ */
+uint8_t process_packet (netflow_recording_system_t netflow_records,
+                        netflow_sending_system_t sending_system,
+                        const struct pcap_pkthdr* header,
+                        const u_char* packet,
+                        options_t options);
 
 #endif // FLOW_NETFLOW_V5_H

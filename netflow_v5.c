@@ -15,12 +15,9 @@
 
 #include <stdlib.h>
 
-
-
 #include <pcap.h>
 #include <netinet/ether.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "util.h"
 
@@ -35,8 +32,6 @@
 
 #include <netinet/ip_icmp.h>
 
-#include <netdb.h> // For Merlin server.
-
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 
@@ -47,9 +42,76 @@
 #include "tree.h"
 #include "util.h"
 
-#define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
-#define DEFAULT_PORT 2055
+#define SIZE_ETHERNET (14)  // Offset of Ethernet header to L3 protocol.
 
+/*
+ * Function for comparing flows by their keys.
+ *
+ * @param first_flow  First flow key.
+ * @param second_flow Second flow key.
+ * @return            The function returns 0 if the keys are equal, 1 if
+ *                    a specific value is greater in first flow key,
+ *                    -1 if a specific value is greater in second flow key.
+ */
+int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)
+{
+    int return_code;
+
+    if (first_flow->input != second_flow->input)
+    {
+        return (first_flow->input > second_flow->input) ? 1 : -1;
+    }
+
+    return_code = memcmp(&(first_flow->src_addr),
+                         &(second_flow->src_addr),
+                         sizeof(first_flow->src_addr));
+
+    if (return_code != 0)
+    {
+        return (return_code > 0) ? 1 : -1;
+    }
+
+    return_code = memcmp(&(first_flow->dst_addr),
+                         &(second_flow->dst_addr),
+                         sizeof(first_flow->dst_addr));
+
+    if (return_code != 0)
+    {
+        return (return_code > 0) ? 1 : -1;
+    }
+
+    if (first_flow->prot != second_flow->prot)
+    {
+        return (first_flow->prot > second_flow->prot) ? 1 : -1;
+    }
+
+    if (first_flow->src_port != second_flow->src_port)
+    {
+        return (ntohs(first_flow->src_port) > ntohs(second_flow->src_port)) ? 1 : -1;
+    }
+
+    if (first_flow->dst_port != second_flow->dst_port)
+    {
+        return (ntohs(first_flow->dst_port) > ntohs(second_flow->dst_port)) ? 1 : -1;
+    }
+
+    if (first_flow->tos != second_flow->tos)
+    {
+        return (first_flow->tos > second_flow->tos) ? 1 : -1;
+    }
+
+    return 0;
+}
+
+/*
+ * Function for exporting flows to collector.
+ *
+ * @param netflow_records Pointer to pointer to the netflow recording system.
+ * @param sending_system  Pointer to pointer to the sending system.
+ * @param flows           An array of flows to export.
+ * @param flows_number    The number of flows in the array of flows to export.
+ * @return                Status of function processing.
+ */
 uint8_t export_flows (netflow_recording_system_t netflow_records,
                       netflow_sending_system_t sending_system,
                       flow_node_t* flows,
@@ -120,6 +182,54 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
     return NO_ERROR;
 }
 
+/*
+ * Function for exporting expired flows to collector.
+ *
+ * @param netflow_records   Pointer to pointer to the netflow recording system.
+ * @param sending_system    Pointer to pointer to the sending system.
+ * @param packet_time_stamp Current packet time stamp.
+ * @param options           Pointer to options storage.
+ * @return                  Status of function processing.
+ */
+uint8_t export_expired_flows(netflow_recording_system_t netflow_records,
+                             netflow_sending_system_t sending_system,
+                             struct timeval* packet_time_stamp,
+                             options_t options)
+{
+    uint8_t status;
+    bst_node_t expired_flows_tree;
+
+    bst_init(&expired_flows_tree);
+
+    // Add expired flows into the expired flows tree.
+    status = bst_find_expired(&(netflow_records->tree),
+                              &expired_flows_tree,
+                              packet_time_stamp,
+                              options);
+
+    if (status != NO_ERROR)
+    {
+        return status;
+    }
+
+    // Export all flows from the expired flows tree by the oldest one.
+    status = bst_export_all(netflow_records, sending_system, &expired_flows_tree);
+
+    if (status != NO_ERROR)
+    {
+        bst_dispose(&(netflow_records->tree));
+    }
+
+    return status;
+}
+
+/*
+ * Function for exporting all active cached flows and disposing of a tree.
+ *
+ * @param netflow_records   Pointer to pointer to the netflow recording system.
+ * @param sending_system    Pointer to pointer to the sending system.
+ * @return                  Status of function processing.
+ */
 uint8_t export_all_flows_dispose_tree (netflow_recording_system_t netflow_records,
                                        netflow_sending_system_t sending_system)
 {
@@ -129,95 +239,25 @@ uint8_t export_all_flows_dispose_tree (netflow_recording_system_t netflow_record
     if (tree != NULL)
     {
         status = bst_export_all(netflow_records , sending_system, tree);
-        //bst_dispose(tree);
     }
 
     return status;
 }
 
-uint8_t connect_socket (int* sock, char* source)
-{
-    struct sockaddr_in server;//, from; // address structures of the server and the client
-    struct hostent *servent;         // network host entry required by gethostbyname()
-
-    uint8_t status = NO_ERROR;
-    char* source_name = NULL;
-    char* source_port = NULL;
-
-    uint16_t port_numeric;
-
-    status = parse_name_port(source, &source_name, &source_port);
-
-    printf("name: %s\n", source_name);
-
-    if (status != NO_ERROR)
-    {
-        return status;
-    }
-
-    memset(&server, 0, sizeof(server)); // erase the server structure
-    server.sin_family = AF_INET;
-
-    // make DNS resolution of the first parameter using gethostbyname()
-
-    // check the first parameter
-    if ((servent = gethostbyname(source_name)) == NULL)
-    {
-        free_string(&source_name);
-        free_string(&source_port);
-
-        return SOCKET_ERROR;
-    }
-
-    // copy the first parameter to the server.sin_addr structure
-    memcpy(&server.sin_addr, servent->h_addr, servent->h_length);
-
-    if (source_port != NULL)
-    {
-        port_numeric = strtoui_16(source_port);
-
-        if (port_numeric == 0)
-        {
-            return INVALID_OPTION_ERROR;
-        }
-
-        server.sin_port = htons(port_numeric);        // server port (network byte order)
-
-        printf("port: %hu\n", port_numeric);
-    }
-    else
-    {
-        server.sin_port = htons(DEFAULT_PORT);
-
-        printf("port: %d\n", DEFAULT_PORT);
-    }
-
-    //create a client socket
-    if ((*sock = socket(AF_INET , SOCK_DGRAM , 0)) == -1)
-    {
-        return SOCKET_ERROR;
-    }
-
-    //len = sizeof(server);
-    //fromlen = sizeof(from);
-
-    // create a connected UDP socket
-    if (connect(*sock, (struct sockaddr *)&server, sizeof(server))  == -1)
-    {
-        return SOCKET_ERROR;
-    }
-
-    free_string(&source_name);
-    free_string(&source_port);
-
-    return NO_ERROR;
-}
-
-void disconnect_socket (const int* sock)
-{
-    close(*sock);
-}
-
+/*
+ * Function for handling the new packet. The function finds the flow
+ * with the same parameters as the packet or creates a new one.
+ *
+ * @param netflow_records      Pointer to pointer to the netflow recording
+ *                             system.
+ * @param sending_system       Pointer to pointer to the sending system.
+ * @param packet_key           The NetFlow key format of a packet.
+ * @param packet_time_stamp    Current packet time stamp.
+ * @param packet_layer_3_bytes The number of Layer 3 bytes in the packet.
+ * @param packet_tcp_flags     TCP flags of the current packet.
+ * @param options              Pointer to options storage.
+ * @return                     Status of function processing.
+ */
 uint8_t find_flow (netflow_recording_system_t netflow_records,
                    netflow_sending_system_t sending_system,
                    netflow_v5_key_t packet_key,
@@ -326,38 +366,17 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
     return status;
 }
 
-uint8_t export_expired_flows(netflow_recording_system_t netflow_records,
-                             netflow_sending_system_t sending_system,
-                             struct timeval* packet_time_stamp,
-                             options_t options)
-{
-    uint8_t status;
-    bst_node_t expired_flows_tree;
-
-    bst_init(&expired_flows_tree);
-
-    // Add expired flows into the expired flows tree.
-    status = bst_find_expired(&(netflow_records->tree),
-                              &expired_flows_tree,
-                              packet_time_stamp,
-                              options);
-
-    if (status != NO_ERROR)
-    {
-        return status;
-    }
-
-    // Export all flows from the expired flows tree by the oldest one.
-    status = bst_export_all(netflow_records, sending_system, &expired_flows_tree);
-
-    if (status != NO_ERROR)
-    {
-        bst_dispose(&(netflow_records->tree));
-    }
-
-    return status;
-}
-
+/*
+ * Function for handling and processing packet data including calls of functions
+ * responsible for managing flows.
+ *
+ * @param netflow_records   Pointer to pointer to the netflow recording system.
+ * @param sending_system    Pointer to pointer to the sending system.
+ * @param header            Packet header data.
+ * @param packet            Packet body data.
+ * @param options           Pointer to options storage.
+ * @return                  Status of function processing.
+ */
 uint8_t process_packet (netflow_recording_system_t netflow_records,
                         netflow_sending_system_t sending_system,
                         const struct pcap_pkthdr* header,
@@ -365,10 +384,9 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
                         options_t options)
 {
     static bool first_packet = true;
-
     struct ip* my_ip = NULL;
-    const struct tcphdr* my_tcp = NULL;    // pointer to the beginning of TCP header
-    const struct udphdr* my_udp = NULL;    // pointer to the beginning of UDP header
+    const struct tcphdr* my_tcp = NULL; // Pointer to the beginning of TCP header.
+    const struct udphdr* my_udp = NULL; // Pointer to the beginning of UDP header.
     const struct icmp* my_icmp = NULL;
     netflow_v5_key_t packet_key = NULL;
     u_int size_ip = 0;
@@ -391,13 +409,6 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
            &packet_time_stamp,
            sizeof(*(netflow_records->last_packet_time)));
 
-/*
-    if (netflow_records->tree == NULL)
-    {
-        printf("process_packet: tree is null\n");
-    }
-*/
-
     // Check timers with actual packet timestamp value
     // and export the expired flows.
     status = export_expired_flows(netflow_records,
@@ -417,8 +428,8 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
         return MEMORY_HANDLING_ERROR;
     }
 
-    my_ip = (struct ip*) (packet+SIZE_ETHERNET);        // skip Ethernet header
-    size_ip = my_ip->ip_hl*4;                           // length of IP header
+    my_ip = (struct ip*) (packet+SIZE_ETHERNET); // Skip Ethernet header.
+    size_ip = my_ip->ip_hl*4;                    // Length of IP header.
 
     packet_key->input = 0;
     packet_key->tos = my_ip->ip_tos;
@@ -447,7 +458,8 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
                                options);
             break;
         case IPPROTO_TCP: // TCP protocol
-            my_tcp = (struct tcphdr *) (packet + SIZE_ETHERNET + size_ip); // pointer to the TCP header
+            // Pointer to the TCP header.
+            my_tcp = (struct tcphdr *) (packet + SIZE_ETHERNET + size_ip);
 
             packet_key->src_port = ntohs(my_tcp->th_sport);
             packet_key->dst_port = ntohs(my_tcp->th_dport);
@@ -463,7 +475,8 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
                                options);
             break;
         case IPPROTO_UDP: // UDP protocol
-            my_udp = (struct udphdr *) (packet+SIZE_ETHERNET+size_ip); // pointer to the UDP header
+            // Pointer to the UDP header.
+            my_udp = (struct udphdr *) (packet+SIZE_ETHERNET+size_ip);
 
             packet_key->src_port = ntohs(my_udp->uh_sport);
             packet_key->dst_port = ntohs(my_udp->uh_dport);
@@ -483,54 +496,4 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
     free_netflow_key(&packet_key);
 
     return status;
-}
-
-int compare_flows (netflow_v5_key_t first_flow, netflow_v5_key_t second_flow)
-{
-    int return_code;
-
-    if (first_flow->input != second_flow->input)
-    {
-        return (first_flow->input > second_flow->input) ? 1 : -1;
-    }
-
-    return_code = memcmp(&(first_flow->src_addr),
-                         &(second_flow->src_addr),
-                         sizeof(first_flow->src_addr));
-
-    if (return_code != 0)
-    {
-        return (return_code > 0) ? 1 : -1;
-    }
-
-    return_code = memcmp(&(first_flow->dst_addr),
-                         &(second_flow->dst_addr),
-                         sizeof(first_flow->dst_addr));
-
-    if (return_code != 0)
-    {
-        return (return_code > 0) ? 1 : -1;
-    }
-
-    if (first_flow->prot != second_flow->prot)
-    {
-        return (first_flow->prot > second_flow->prot) ? 1 : -1;
-    }
-
-    if (first_flow->src_port != second_flow->src_port)
-    {
-        return (ntohs(first_flow->src_port) > ntohs(second_flow->src_port)) ? 1 : -1;
-    }
-
-    if (first_flow->dst_port != second_flow->dst_port)
-    {
-        return (ntohs(first_flow->dst_port) > ntohs(second_flow->dst_port)) ? 1 : -1;
-    }
-
-    if (first_flow->tos != second_flow->tos)
-    {
-        return (first_flow->tos > second_flow->tos) ? 1 : -1;
-    }
-
-    return 0;
 }

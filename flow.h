@@ -20,13 +20,17 @@
 #include "netflow_v5.h"
 #include "option.h"
 
+uint8_t connect_socket (int* sock, char* source);
+
+void disconnect_socket (const int* sock);
+
 /*
  * Function to handle needed operations before ending of flow program.
  * The needed operations is:
  * - free options allocated memory
  *
  * @param options         Pointer to pointer options storage.
- * @param netflow_records Pointer to netflow recording system.
+ * @param netflow_records Pointer to NetFlow recording system.
  * @return                Status of function processing.
  */
 uint8_t flow_epilogue (options_t options,
