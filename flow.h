@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: flow.h                                           */
-/* Created: 2022-09-30                                    */
-/* Last change: 2022-10-26                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */

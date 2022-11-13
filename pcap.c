@@ -81,7 +81,7 @@ uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
 
     printf("end of processing packets\n");
 
-    if (return_code < 0)
+    if (return_code < 0 && return_code != PCAP_ERROR_BREAK)
     {
         return PCAP_HANDLING_ERROR;
     }
