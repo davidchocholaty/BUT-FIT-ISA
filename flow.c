@@ -168,6 +168,11 @@ int main (int argc, char* argv[])
     {
         return EXIT_FAILURE;
     }
+    else if (options->help_set)
+    {
+        flow_epilogue(netflow_records, sending_system, options);
+        return EXIT_SUCCESS;
+    }
 
     status = allocate_recording_system(&netflow_records);
 

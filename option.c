@@ -67,7 +67,16 @@ uint8_t init_options (options_t* options)
  */
 void print_help (char* program_name)
 {
-    printf("TODO help message %s\n", program_name);
+    fprintf(stderr,
+            "Usage: %s [-f <file>] [-c <netflow_collector>[:<port>]] "
+            "[-a <active_timer>] [-i <inactive_timer>] [-m <count>]\n"
+            "\n"
+            "  -f <file>                      The name of the analyzed file - in the pcap format (default: STDIN).\n"
+            "  -c <netflow_collector:port>    IP address or hostname of the NetFlow collector (default: 127.0.0.1:2055).\n"
+            "  -a <active_timer>              Interval in seconds after which active records are exported to the collector (default: 60).\n"
+            "  -i <seconds>                   Interval in seconds after which inactive records are exported to the collector (default: 10).\n"
+            "  -m <count>                     Flow-cache size (default 1024).\n",
+            program_name);
 }
 
 /*
