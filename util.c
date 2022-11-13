@@ -154,6 +154,13 @@ uint8_t parse_name_port (char* in_source, char** out_name, char** out_port)
 /*
  * Function for returning the numeric value of a time in milliseconds.
  *
+ * This function is inspired of the following source:
+ *
+ * Source: https://github.com/irino/softflowd/blob/3b3473c451846e264ff5269411172627257e58dc/softflowd.c#L735
+ * Author: Damien Miller (https://github.com/djmdjm)
+ * Date of current last modification: 2022-10-21
+ * Copyright: Copyright 2002-2006 Damien Miller <djm@mindrot.org> All rights reserved.
+ *
  * @param time              Current time value.
  * @param first_packet_time Time of the first caught packet.
  * @return                  The numeric time value in milliseconds.

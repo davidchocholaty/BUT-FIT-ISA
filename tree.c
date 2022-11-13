@@ -386,6 +386,14 @@ uint8_t bst_find_expired (bst_node_t* tree,
  * Function for finding the oldest node in the binary search tree by time value,
  * eventually by flow node id.
  *
+ * This function is inspired of the following source:
+ *
+ * Source: https://stackoverflow.com/questions/11728191/how-to-create-a-function-that-returns-smallest-value-of-an-unordered-binary-tree
+ * Author: yuri kilochek (https://stackoverflow.com/users/1554020/yuri-kilochek)
+ * Date of answering: 2012-07-30
+ * Edited: Zimano (https://stackoverflow.com/users/1037960/zimano)
+ * Date of the editing: 2016-09-13
+ *
  * @param tree
  * @param oldest_node Pointer to pointer to the storage of the oldest node
  *                    in the tree. Before the function call the oldest node
@@ -395,7 +403,6 @@ uint8_t bst_find_expired (bst_node_t* tree,
  * @return            Time of the currently oldest node in the tree due to
  *                    recursion calls.
  */
-// https://stackoverflow.com/questions/11728191/how-to-create-a-function-that-returns-smallest-value-of-an-unordered-binary-tree
 struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
 {
     int comparison_status;

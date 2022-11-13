@@ -30,6 +30,15 @@
  * Function for connecting socket to establishing a connection
  * with a NetFlow collector.
  *
+ * This function is inspired of the following source:
+ *
+ * Source: Course ISA at BUT FIT 2022 (https://www.fit.vut.cz/study/course/ISA/.en)
+ * Lecture: 2. Advanced programming of TCP/IP network applications.
+ * File: echo-udp-client2.c
+ * Year of creation: 2016
+ * Year of the last file modification: 2019
+ * Author: Matoušek Petr, doc. Ing., Ph.D., M.A. (https://www.fit.vut.cz/person/matousp/.en)
+ *
  * @param sock   Pointer to socket.
  * @param source String containing a collector name and possibly port.
  * @return       Status of function processing.

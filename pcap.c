@@ -20,7 +20,7 @@
 #include "error.h"
 #include "netflow_v5.h"
 
-#define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
+#define SIZE_ETHERNET (14) // Offset of Ethernet header to L3 protocol.
 
 /*
  * Function which runs reading the packet from the pcap files, processing

@@ -360,6 +360,15 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
  * Function for handling and processing packet data including calls of functions
  * responsible for managing flows.
  *
+ * This function is inspired of the following source:
+ *
+ * Source: Course ISA at BUT FIT 2022 (https://www.fit.vut.cz/study/course/ISA/.en)
+ * Lecture: 3. Multicast. Link layer data processing.
+ * File: read-pcap.c
+ * Year of creation: 2020
+ * Year of the last file modification: 2020
+ * Author: Matoušek Petr, doc. Ing., Ph.D., M.A. (https://www.fit.vut.cz/person/matousp/.en)
+ *
  * @param netflow_records   Pointer to pointer to the netflow recording system.
  * @param sending_system    Pointer to pointer to the sending system.
  * @param header            Packet header data.
