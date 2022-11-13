@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: option.h                                         */
-/* Created: 2022-09-30                                    */
-/* Last change: 2022-10-13                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -24,66 +22,77 @@ typedef struct inactive_timeout* inactive_timeout_t;
 typedef struct cached_entries* cached_entries_t;
 typedef struct options* options_t;
 
-// The ranges values for timeouts are taken from the source on 2022-10-01:
+// The range values for timeouts are taken from the source on 2022-10-01:
 // https://www.cisco.com/en/US/docs/ios/12_3t/netflow/command/reference/nfl_a1gt_ps5207_TSD_Products_Command_Reference_Chapter.html
 
 enum active_timeout_range
 {
-    // TODO vratit zpet
-    //ACTIVE_TIMEOUT_MIN = 60,
-    //ACTIVE_TIMEOUT_MAX = 3600
-    ACTIVE_TIMEOUT_MIN = 1,
-    ACTIVE_TIMEOUT_MAX = 100
+    ACTIVE_TIMEOUT_MIN = 60,
+    ACTIVE_TIMEOUT_MAX = 3600
 };
 
 enum inactive_timeout_range
 {
-    // TODO vratit zpet
-    //INACTIVE_TIMEOUT_MIN = 10,
-    //INACTIVE_TIMEOUT_MAX = 600
-    INACTIVE_TIMEOUT_MIN = 1,
-    INACTIVE_TIMEOUT_MAX = 100
+    INACTIVE_TIMEOUT_MIN = 10,
+    INACTIVE_TIMEOUT_MAX = 600
 };
 
 enum entries_number_range
 {
-    // TODO vratit zpet
-    //ENTRIES_NUMBER_MIN = 1024,
-    //ENTRIES_NUMBER_MAX = 524288
-    ENTRIES_NUMBER_MIN = 1,
+    ENTRIES_NUMBER_MIN = 1024,
     ENTRIES_NUMBER_MAX = 524288
 };
 
+/*
+ * Structure to store the name of the input file.
+ */
 struct analyzed_input
 {
     bool is_user_set;
     char* file_name;
 };
 
+/*
+ * Structure to store the name and port of the NetFlow collector.
+ */
 struct netflow_collector
 {
     bool is_user_set;
     char* source;
 };
 
+/*
+ * Structure to store the active timeout.
+ */
 struct active_timeout
 {
     bool is_user_set;
     uint16_t timeout_seconds;
 };
 
+/*
+ * Structure to store the inactive timeout.
+ */
 struct inactive_timeout
 {
     bool is_user_set;
     uint16_t timeout_seconds;
 };
 
+/*
+ * Structure to store the maximum allowed size of the cache (meaning number
+ * of nodes in a tree).
+ */
 struct cached_entries
 {
     bool is_user_set;
     uint32_t entries_number;
 };
 
+/*
+ * Structure to store the references for the stored parameter and program
+ * settings in general.
+ */
 struct options
 {
     bool help_set;

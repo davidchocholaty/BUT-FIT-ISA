@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: option.c                                         */
-/* Created: 2022-09-30                                    */
-/* Last change: 2022-10-26                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -105,10 +103,10 @@ uint8_t set_default_if_not_user_set (options_t options)
 /*
  * Main function for parsing arguments
  *
- * @param argc    Count of arguments.
- * @param argv    Arguments.
+ * @param argc     Count of arguments.
+ * @param argv     Arguments.
  * @param options  Pointer to options storage.
- * @return        Status of function processing.
+ * @return         Status of function processing.
  */
 uint8_t parse_options (int argc, char* argv[], options_t options)
 {
@@ -162,9 +160,6 @@ uint8_t parse_options (int argc, char* argv[], options_t options)
 
                 strcpy(options->netflow_collector_source->source, optarg);
 
-                // TODO done check on NULL and if the structure is valid later
-                //  for get hostbyname - what it does if the parameter is NULL
-
                 break;
             case 'a':
                 // The second occurrence of the parameter.
@@ -185,7 +180,6 @@ uint8_t parse_options (int argc, char* argv[], options_t options)
                     if (!in_range((unsigned int)options->active_entries_timeout->timeout_seconds,
                                   ACTIVE_TIMEOUT_MIN, ACTIVE_TIMEOUT_MAX))
                     {
-                        printf("returning error\n");
                         return ACTIVE_RANGE_ERROR;
                     }
                 }
