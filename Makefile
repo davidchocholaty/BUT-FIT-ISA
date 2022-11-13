@@ -1,8 +1,6 @@
 #**********************************************************
 #
 # File: Makefile
-# Created: 2022-09-28
-# Last change: 2022-10-26
 # Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>
 # Project: Project for the course ISA - variant 1
 #          - Generation of NetFlow data from captured
@@ -42,5 +40,5 @@ $(EXECUTABLE): $(OBJS)
 clean:
 	rm -f $(EXECUTABLE) *.o $(TAR_FILE)
 
-$(TAR_FILE): *.c *.h Makefile manual.pdf flow.1
+$(TAR_FILE): *.c *.h Makefile manual.pdf flow.1 README.md
 	tar $(TAR_OPTIONS) $@ $^
