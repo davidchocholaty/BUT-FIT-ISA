@@ -28,16 +28,22 @@
 
 #define DEFAULT_PORT 2055
 
+/*
+ * Function for connecting socket to establishing a connection
+ * with a NetFlow collector.
+ *
+ * @param sock   Pointer to socket.
+ * @param source String containing a collector name and possibly port.
+ * @return       Status of function processing.
+ */
 uint8_t connect_socket (int* sock, char* source)
 {
-    struct sockaddr_in server;//, from; // address structures of the server and the client
-    struct hostent *servent;         // network host entry required by gethostbyname()
-
-    uint8_t status = NO_ERROR;
+    uint8_t status;
+    uint16_t port_numeric;
+    struct sockaddr_in server; // Address structure of the server.
+    struct hostent *servent;   // Network host entry required by gethostbyname().
     char* source_name = NULL;
     char* source_port = NULL;
-
-    uint16_t port_numeric;
 
     status = parse_name_port(source, &source_name, &source_port);
 
@@ -48,12 +54,11 @@ uint8_t connect_socket (int* sock, char* source)
         return status;
     }
 
-    memset(&server, 0, sizeof(server)); // erase the server structure
+    memset(&server, 0, sizeof(server)); // Erase the server structure.
     server.sin_family = AF_INET;
 
-    // make DNS resolution of the first parameter using gethostbyname()
-
-    // check the first parameter
+    // Make DNS resolution of the first parameter using gethostbyname().
+    // Check the first parameter.
     if ((servent = gethostbyname(source_name)) == NULL)
     {
         free_string(&source_name);
@@ -62,7 +67,7 @@ uint8_t connect_socket (int* sock, char* source)
         return SOCKET_ERROR;
     }
 
-    // copy the first parameter to the server.sin_addr structure
+    // Copy the first parameter to the server.sin_addr structure.
     memcpy(&server.sin_addr, servent->h_addr, servent->h_length);
 
     if (source_port != NULL)
@@ -74,7 +79,8 @@ uint8_t connect_socket (int* sock, char* source)
             return INVALID_OPTION_ERROR;
         }
 
-        server.sin_port = htons(port_numeric);        // server port (network byte order)
+        // Server port (network byte order).
+        server.sin_port = htons(port_numeric);
 
         printf("port: %hu\n", port_numeric);
     }
@@ -85,16 +91,13 @@ uint8_t connect_socket (int* sock, char* source)
         printf("port: %d\n", DEFAULT_PORT);
     }
 
-    //create a client socket
+    // Create a client socket.
     if ((*sock = socket(AF_INET , SOCK_DGRAM , 0)) == -1)
     {
         return SOCKET_ERROR;
     }
 
-    //len = sizeof(server);
-    //fromlen = sizeof(from);
-
-    // create a connected UDP socket
+    // Create a connected UDP socket.
     if (connect(*sock, (struct sockaddr *)&server, sizeof(server))  == -1)
     {
         return SOCKET_ERROR;
@@ -106,6 +109,11 @@ uint8_t connect_socket (int* sock, char* source)
     return NO_ERROR;
 }
 
+/*
+ * Function for disconnecting the created socket.
+ *
+ * @param sock Pointer to socket.
+ */
 void disconnect_socket (const int* sock)
 {
     close(*sock);
@@ -116,13 +124,14 @@ void disconnect_socket (const int* sock)
  * The needed operations is:
  * - free options allocated memory
  *
- * @param options         Pointer to pointer options storage.
  * @param netflow_records Pointer to NetFlow recording system.
+ * @param sending_system  Pointer to NetFlow sending system.
+ * @param options         Pointer to pointer options storage.
  * @return                Status of function processing.
  */
-uint8_t flow_epilogue (options_t options,
-                       netflow_recording_system_t netflow_records,
-                       netflow_sending_system_t sending_system)
+uint8_t flow_epilogue (netflow_recording_system_t netflow_records,
+                       netflow_sending_system_t sending_system,
+                       options_t options)
 {
     uint8_t status;
 
@@ -138,9 +147,9 @@ uint8_t flow_epilogue (options_t options,
     return status;
 }
 
-uint8_t run_exporter (options_t options,
-                      netflow_recording_system_t netflow_records,
-                      netflow_sending_system_t sending_system)
+uint8_t run_exporter (netflow_recording_system_t netflow_records,
+                      netflow_sending_system_t sending_system,
+                      options_t options)
 {
     bst_init(&(netflow_records->tree));
     *(netflow_records->cached_flows_number) = 0;
@@ -168,7 +177,7 @@ int main (int argc, char* argv[])
     if (status != NO_ERROR)
     {
         print_error(MEMORY_HANDLING_ERROR, argv[0]);
-        flow_epilogue(options, netflow_records, sending_system);
+        flow_epilogue(netflow_records, sending_system, options);
 
         return EXIT_FAILURE;
     }
@@ -178,32 +187,33 @@ int main (int argc, char* argv[])
     if (status != NO_ERROR)
     {
         print_error(MEMORY_HANDLING_ERROR, argv[0]);
-        flow_epilogue(options, netflow_records, sending_system);
+        flow_epilogue(netflow_records, sending_system, options);
 
         return EXIT_FAILURE;
     }
 
-    status = connect_socket(sending_system->socket, options->netflow_collector_source->source);
+    status = connect_socket(sending_system->socket,
+                            options->netflow_collector_source->source);
 
     if (status != NO_ERROR)
     {
         print_error(status, argv[0]);
-        flow_epilogue(options, netflow_records, sending_system);
+        flow_epilogue(netflow_records, sending_system, options);
 
         return EXIT_FAILURE;
     }
 
-    status = run_exporter(options, netflow_records, sending_system);
+    status = run_exporter(netflow_records, sending_system, options);
 
     if (status != NO_ERROR)
     {
         print_error(status, argv[0]);
-        flow_epilogue(options, netflow_records, sending_system);
+        flow_epilogue(netflow_records, sending_system, options);
 
         return EXIT_FAILURE;
     }
 
-    status = flow_epilogue(options, netflow_records, sending_system);
+    status = flow_epilogue(netflow_records, sending_system, options);
 
     if (status != NO_ERROR)
     {
