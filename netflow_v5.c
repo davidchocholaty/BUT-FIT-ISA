@@ -223,6 +223,8 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
                    const uint8_t packet_tcp_flags,
                    options_t options)
 {
+    static const uint64_t id_mask = UINT64_MAX >> 1;
+    static uint64_t cache_id = 0;
     uint8_t status = NO_ERROR;
     flow_node_t flow = NULL;
     bst_node_t* flows_tree = &(netflow_records->tree);
@@ -232,15 +234,6 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
     {
         // Matching flow does not exist.
         // A new flow will be created and inserted.
-
-        //----------------------------------------------
-        //static int i = 1;
-
-        //printf("New flow: %d\n", i);
-
-        //i++;
-        //----------------------------------------------
-
         flow_node_t new_flow = NULL;
         netflow_v5_key_t new_key = NULL;
 
@@ -291,9 +284,6 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         memcpy(new_flow->first, packet_time_stamp, sizeof(*(new_flow->first)));
         memcpy(new_flow->last, packet_time_stamp, sizeof(*(new_flow->last)));
 
-        // Add flow into the flows tree.
-        status = bst_insert(flows_tree, new_key, new_flow);
-
         *(netflow_records->cached_flows_number) += 1;
 
         if (*(netflow_records->cached_flows_number) >
@@ -301,6 +291,14 @@ uint8_t find_flow (netflow_recording_system_t netflow_records,
         {
             bst_export_oldest(netflow_records, sending_system, flows_tree);
         }
+
+        new_flow->cache_id = cache_id;
+
+        // Add flow into the flows tree.
+        status = bst_insert(flows_tree, new_key, new_flow);
+
+        // Update the next id value.
+        cache_id = (cache_id + 1) & id_mask;
     }
     else
     {

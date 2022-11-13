@@ -324,10 +324,13 @@ uint8_t bst_find_expired (bst_node_t* tree,
 //struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
 struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
 {
+    int comparison_status;
     struct timeval* time = NULL;
     struct timeval* compare_node_time = NULL;
     struct timeval* oldest_node_time;
     bst_node_t compare_node;
+    uint64_t compare_node_id;
+    uint64_t oldest_node_id;
 
     if (*tree != NULL)
     {
@@ -338,18 +341,44 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
         if (compare_node != NULL)
         {
             compare_node_time = bst_find_oldest(&(compare_node), oldest_node);
+            comparison_status = compare_timeval(compare_node_time, time);
 
-            if (compare_timeval(compare_node_time, time) < 0)
+            if (comparison_status <= 0)
             {
-                // Left node has smaller time.
+                // Left node has smaller or equal time.
                 time = compare_node_time;
 
                 oldest_node_time = (*oldest_node)->value->first;
 
+                comparison_status = compare_timeval(compare_node_time, oldest_node_time);
+
                 // If the time is smaller than currently the oldest one, replace it.
-                if (compare_timeval(compare_node_time, oldest_node_time) < 0)
+                if (comparison_status < 0)
                 {
                     *oldest_node = compare_node;
+                }
+                else if (comparison_status == 0)
+                {
+                    compare_node_id = compare_node->value->cache_id;
+                    oldest_node_id = (*oldest_node)->value->cache_id;
+
+                    if (compare_node_id > oldest_node_id)
+                    {
+                        if (compare_node_id - oldest_node_id > (UINT64_MAX >> 1))
+                        {
+                            // Startsi je s VYSSIM ID
+                            *oldest_node = compare_node;
+                        }
+                    }
+                    else
+                    {
+                        // oldest_node_id > compare_node_id
+                        if (oldest_node_id - compare_node_id <= (UINT64_MAX >> 1))
+                        {
+                            // Startsi je s NIZSIM ID
+                            *oldest_node = compare_node;
+                        }
+                    }
                 }
             }
         }
@@ -360,17 +389,42 @@ struct timeval* bst_find_oldest (bst_node_t* tree, bst_node_t* oldest_node)
         {
             compare_node_time = bst_find_oldest(&(compare_node), oldest_node);
 
-            if (compare_timeval(compare_node_time, time) < 0)
+            if (compare_timeval(compare_node_time, time) <= 0)
             {
-                // Right node has smaller time.
+                // Right node has smaller or equal time.
                 time = compare_node_time;
 
                 oldest_node_time = (*oldest_node)->value->first;
 
+                comparison_status = compare_timeval(compare_node_time, oldest_node_time);
+
                 // If the time is smaller than currently the oldest one, replace it.
-                if (compare_timeval(compare_node_time, oldest_node_time) < 0)
+                if (comparison_status < 0)
                 {
                     *oldest_node = compare_node;
+                }
+                else if (comparison_status == 0)
+                {
+                    compare_node_id = compare_node->value->cache_id;
+                    oldest_node_id = (*oldest_node)->value->cache_id;
+
+                    if (compare_node_id > oldest_node_id)
+                    {
+                        if (compare_node_id - oldest_node_id > (UINT64_MAX >> 2))
+                        {
+                            // Older node is the node with a higher id.
+                            *oldest_node = compare_node;
+                        }
+                    }
+                    else
+                    {
+                        // oldest_node_id > compare_node_id
+                        if (oldest_node_id - compare_node_id <= (UINT64_MAX >> 2))
+                        {
+                            // Older node is the node with a lower id.
+                            *oldest_node = compare_node;
+                        }
+                    }
                 }
             }
         }

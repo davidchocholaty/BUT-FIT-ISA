@@ -93,6 +93,7 @@ struct flow_node
     uint8_t tcp_flags;
     uint8_t prot;
     uint8_t tos;
+    uint64_t cache_id;
 };
 
 struct netflow_recording_system
