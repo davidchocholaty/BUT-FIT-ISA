@@ -13,29 +13,16 @@
 
 #include "netflow_v5.h"
 
-#include <stdlib.h>
-
 #include <pcap.h>
-#include <netinet/ether.h>
-#include <time.h>
-
-#include "util.h"
-
-// TODO maybe later delete
+#include <stdlib.h>
+#include <string.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-
+#include <netinet/ip_icmp.h>
 #define __FAVOR_BSD // For Merlin server.
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #undef __FAVOR_BSD // For Merlin server.
-
-#include <netinet/ip_icmp.h>
-
-#include <arpa/inet.h>
-#include <netinet/if_ether.h>
-
-#include <string.h>
 
 #include "error.h"
 #include "memory.h"

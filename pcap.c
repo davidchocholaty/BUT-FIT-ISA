@@ -11,10 +11,10 @@
 
 #include "pcap.h"
 
-#include <pcap.h>
-#include <time.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <pcap.h>
+#include <time.h>
 
 #include "error.h"
 #include "netflow_v5.h"
