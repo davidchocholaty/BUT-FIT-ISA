@@ -12,15 +12,8 @@
 #include "pcap.h"
 
 #include <pcap.h>
-#include <netinet/ether.h>
 #include <time.h>
-
-// TODO maybe later delete
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <arpa/inet.h>
 #include <netinet/if_ether.h>
 
 #include "error.h"
