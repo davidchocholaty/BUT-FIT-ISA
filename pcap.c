@@ -1,8 +1,6 @@
 /**********************************************************/
 /*                                                        */
 /* File: pcap.c                                           */
-/* Created: 2022-10-26                                    */
-/* Last change: 2022-10-26                                */
 /* Author: David Chocholaty <xchoch09@stud.fit.vutbr.cz>  */
 /* Project: Project for the course ISA - variant 1        */
 /*          - Generation of NetFlow data from captured    */
@@ -30,9 +28,16 @@
 
 #define SIZE_ETHERNET (14)       // offset of Ethernet header to L3 protocol
 
-
 /*
- * TODO
+ * Function which runs reading the packet from the pcap files, processing
+ * the packets and calling the function handling with the flows.
+ *
+ * @param netflow_records The storage of the netflow recording system
+ *                        for the whole program.
+ * @param sending_system  The storage of the sending system for the whole
+ *                        program.
+ * @param options         Pointer to options storage.
+ * @return                Status of function processing.
  */
 uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
                                 netflow_sending_system_t sending_system,
@@ -42,16 +47,11 @@ uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
     int return_code;
     char errbuf[PCAP_ERRBUF_SIZE];
     const u_char* packet;
-    struct pcap_pkthdr* header; // Has to be pointer because of pcap_next_ex
-    pcap_t* handle;                 // file/device handler
+    struct pcap_pkthdr* header; // Has to be pointer because of pcap_next_ex.
+    pcap_t* handle;
     struct ether_header* eptr;
 
     char* input_stream = options->analyzed_input_source->file_name;
-
-    //struct ip* my_ip;
-    //const struct tcphdr* my_tcp;    // pointer to the beginning of TCP header
-    //const struct udphdr* my_udp;    // pointer to the beginning of UDP header
-    //u_int size_ip;
 
     if (input_stream == NULL)
     {
@@ -67,7 +67,7 @@ uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
 
     while (((return_code = pcap_next_ex(handle, &header, &packet)) > 0) && status == NO_ERROR)
     {
-        // read the Ethernet header
+        // Read the Ethernet header.
         eptr = (struct ether_header *) packet;
 
         switch (ntohs(eptr->ether_type)){
@@ -86,7 +86,7 @@ uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
         return PCAP_HANDLING_ERROR;
     }
 
-    //printf("End of file reached ...\n");
+    printf("End of file reached ...\n");
 
     // close the capture device and deallocate resources
     pcap_close(handle);

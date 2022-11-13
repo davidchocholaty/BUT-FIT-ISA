@@ -125,10 +125,10 @@ void print_help (char* program_name);
 /*
  * Main function for parsing arguments
  *
- * @param argc    Count of arguments.
- * @param argv    Arguments.
+ * @param argc     Count of arguments.
+ * @param argv     Arguments.
  * @param options  Pointer to options storage.
- * @return        Status of function processing.
+ * @return         Status of function processing.
  */
 uint8_t parse_options (int argc, char* argv[], options_t options);
 
