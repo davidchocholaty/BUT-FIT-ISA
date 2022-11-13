@@ -28,6 +28,7 @@ void print_error (uint8_t error, char* program_name)
     {
         "exit success",
         "invalid option",
+        "invalid input file",
         "multi entry of an option",
         "active timeout not in range",
         "inactive timeout not in range",
