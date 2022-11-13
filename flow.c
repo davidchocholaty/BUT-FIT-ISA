@@ -13,6 +13,7 @@
 
 #include <netdb.h> // For Merlin server.
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -43,8 +44,6 @@ uint8_t connect_socket (int* sock, char* source)
     char* source_port = NULL;
 
     status = parse_name_port(source, &source_name, &source_port);
-
-    printf("name: %s\n", source_name);
 
     if (status != NO_ERROR)
     {
@@ -79,13 +78,15 @@ uint8_t connect_socket (int* sock, char* source)
         // Server port (network byte order).
         server.sin_port = htons(port_numeric);
 
-        printf("port: %hu\n", port_numeric);
+        // Print info about collector.
+        printf("netflow_collector:port: %s:%d\n", source_name, port_numeric);
     }
     else
     {
         server.sin_port = htons(DEFAULT_PORT);
 
-        printf("port: %d\n", DEFAULT_PORT);
+        // Print info about collector.
+        printf("netflow_collector:port: %s:%d\n", source_name, DEFAULT_PORT);
     }
 
     // Create a client socket.
@@ -174,6 +175,18 @@ int main (int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
+    // Print intro message.
+    printf("flow v1.0.0\n");
+    printf("\n");
+    printf("\n");
+    printf("Settings:\n");
+    printf("---------\n");
+
+    // Print info about options settings.
+    printf("active_timer: %d\n", options->active_entries_timeout->timeout_seconds);
+    printf("inactive_timer: %d\n", options->inactive_entries_timeout->timeout_seconds);
+    printf("cache_size: %d\n", options->cached_entries_number->entries_number);
+
     status = allocate_recording_system(&netflow_records);
 
     if (status != NO_ERROR)
@@ -221,6 +234,8 @@ int main (int argc, char* argv[])
     {
         return EXIT_FAILURE;
     }
+
+    printf("End of processing packets ...\n");
 
     return EXIT_SUCCESS;
 }
