@@ -15,8 +15,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <pcap.h>
+#include <stddef.h>
 #include <stdio.h>
-#include <time.h>
 
 #include "error.h"
 #include "netflow_v5.h"
