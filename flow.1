@@ -11,8 +11,9 @@ flow \-  creates NetFlow records from network data in pcap format
 .SH DESCRIPTION
 .B flow
 is a tool implementing the NetFlow exporter.
-It generates the NetFlow data (NetFlow records) from the captured network data from the network communication.
-The captured data are in pcap format and the resulting NetFlow records are sent to the collector.
+It generates the NetFlow data (NetFlow records) from the captured network data
+from the network communication. The captured data are in pcap format and the
+resulting NetFlow records are sent to the collector.
 .SH OPTIONS
 .TP
 .BR \-f =\fI<file>\fR
@@ -25,16 +26,50 @@ Optionally, also a UDP port can be set.
 The default is 127.0.0.1:2055.
 .TP
 .BR \-a =\fI<active_timer>\fR
-Sets the interval in seconds after which active records are exported to the collector.
-The default is 60.
+Sets the interval in seconds after which active records are exported
+to the collector. The default is 60.
 .TP
 .BR \-i =\fI<seconds>\fR
-Sets the interval in seconds after which inactive records are exported to the collector.
-The default is 10.
+Sets the interval in seconds after which inactive records are exported
+to the collector. The default is 10.
 .TP
 .BR \-m =\fI<count>\fR
 The flow-cache size.
-When the maximum size is reached, the oldest record in the cache is exported to the collector.
-The default is 1024.
-.SH OUTPUT
+When the maximum size is reached, the oldest record in the cache is exported
+to the collector. The default is 1024.
 .SH EXAMPLES
+.TP
+.BR "./flow"
+This command-line runs the NetFlow exporter with the default settings
+(file: STDIN, netflow_collector:port: 127.0.0.1:2055, active timer: 60,
+inactive timer: 10, count: 1024).
+.TP
+.BR "./flow -f input.pcap -c 192.168.0.1:2055"
+This command-line runs the NetFlow exporter with the setting of the input file
+to input.pcap and NetFlow collector to 192.168.0.1:2055. Other parameters
+are left at default settings.
+.TP
+.BR "./flow -f input.pcap -c 192.168.127.1"
+This command-line runs the NetFlow exporter with the setting of the input file
+to input.pcap and NetFlow collector to 192.168.127.1. Other parameters
+are left at default settings.
+.TP
+.BR "./flow -f input.pcap -c 192.168.0.1:2055 -a 360"
+This command-line runs the NetFlow exporter with the setting of the input file
+to input.pcap, NetFlow collector to 192.168.0.1:2055 and active timer
+to 360 seconds. Other parameters are left at default settings.
+.TP
+.BR "./flow -f input.pcap -c 192.168.0.1:2055 -i 120"
+This command-line runs the NetFlow exporter with the setting of the input file
+to input.pcap, NetFlow collector to 192.168.0.1:2055 and inactive timer
+to 120 seconds. Other parameters are left at default settings.
+.TP
+.BR "./flow -f input.pcap -c 192.168.0.1:2055 -m 8192"
+This command-line runs the NetFlow exporter with the setting of the input file
+to input.pcap, NetFlow collector to 192.168.0.1:2055 and count to 8192.
+Other parameters are left at default settings.
+.TP
+.BR "./flow -f input.pcap -c 192.168.0.1:2055 -a 600 -i 360 -m 4096"
+This command-line runs the NetFlow exporter with the setting of the input file
+to input.pcap, NetFlow collector to 192.168.0.1:2055, active timer
+to 600 seconds, inactive timer to 360 seconds and count to 4096.

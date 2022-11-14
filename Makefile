@@ -40,5 +40,5 @@ $(EXECUTABLE): $(OBJS)
 clean:
 	rm -f $(EXECUTABLE) *.o $(TAR_FILE)
 
-$(TAR_FILE): *.c *.h Makefile manual.pdf flow.1 README.md
+$(TAR_FILE): *.c *.h Makefile manual.pdf flow.1 README
 	tar $(TAR_OPTIONS) $@ $^

@@ -1,0 +1,60 @@
+Generování NetFlow dat ze zachycené síťové komunikace
+-------------------------------------------------------
+Jméno autora: David Chocholatý
+login autora: xchoch09
+
+Datum vytvoření: 14.11.2022
+
+
+Popis programu:
+-----------------------------
+Program implementuje NetFlow exportér, který ze zachycených síťových dat
+ze síťové komunikace vytvoří záznamy NetFlow. Zachycená data jsou
+ve formátu pcap a výsledné NetFlow záznamy jsou odesílány na kolektor.
+Program podporuje formát NetFlow v5.
+
+
+Příklad spuštění:
+-----------------------------
+- Projekt lze vytvořit pomocí Makefile následujícím příkazem
+
+    make
+
+- Příklad spuštění - obecný zápis volání programu
+
+    ./flow [-f <soubor>] [-c <netflow_kolektor>[:<port>]] [-a <aktivní_časovač>]
+        [-i <neaktivní_časovač>] [-m <počet>]
+
+- Příklad spuštění - výchozí nastavení
+
+    ./flow
+
+- Příklad spuštění - nastavení vstupního souboru na input.pcap,
+NetFlow kolektoru na 192.168.0.1:2055, aktivního časovače na 600 sekund,
+neaktivního časovače na 360 sekund a velikosti mezipaměti na 4096
+
+    ./flow -f input.pcap -c 192.168.0.1:2055 -a 600 -i 360 -m 4096
+
+
+Seznam odevzdaných souborů:
+-----------------------------
+- README
+- manual.pdf
+- flow.1
+- Makefile
+- error.c
+- error.h
+- flow.c
+- flow.h
+- memory.c
+- memory.h
+- netflow_v5.c
+- netflow_v5.h
+- option.c
+- option.h
+- pcap.c
+- pcap.h
+- tree.c
+- tree.h
+- util.c
+- util.h
