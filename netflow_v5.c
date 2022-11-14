@@ -447,6 +447,15 @@ uint8_t process_packet (netflow_recording_system_t netflow_records,
             my_icmp = (struct icmp *) (packet + SIZE_ETHERNET + size_ip);
 
             packet_key->src_port = 0;
+
+            // The calculation formula is inspired of the following source:
+            //
+            // Source: https://marc.info/?l=netflow-tools&m=139653872523808&w=2
+            // Author: Damien Miller (https://github.com/djmdjm)
+            // Contributor: Steve Snodgrass
+            // Project: netflow-tools (Softflowd)
+            // Date of the modification: 2006-03-14
+            // Copyright: Copyright 2002-2006 Damien Miller <djm@mindrot.org> All rights reserved.
             packet_key->dst_port = my_icmp->icmp_type * 256 + my_icmp->icmp_code;
 
             status = find_flow(netflow_records,
