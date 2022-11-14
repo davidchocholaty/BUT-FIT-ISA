@@ -183,10 +183,10 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
  * @param options           Pointer to options storage.
  * @return                  Status of function processing.
  */
-uint8_t export_expired_flows(netflow_recording_system_t netflow_records,
-                             netflow_sending_system_t sending_system,
-                             struct timeval* packet_time_stamp,
-                             options_t options)
+uint8_t export_expired_flows (netflow_recording_system_t netflow_records,
+                              netflow_sending_system_t sending_system,
+                              struct timeval* packet_time_stamp,
+                              options_t options)
 {
     uint8_t status;
     bst_node_t expired_flows_tree;
