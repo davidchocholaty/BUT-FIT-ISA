@@ -13,6 +13,7 @@
 
 #include "netflow_v5.h"
 
+#include <arpa/inet.h>
 #include <pcap.h>
 #include <stdlib.h>
 #include <string.h>

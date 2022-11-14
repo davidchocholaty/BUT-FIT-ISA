@@ -11,6 +11,7 @@
 
 #include "pcap.h"
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <pcap.h>

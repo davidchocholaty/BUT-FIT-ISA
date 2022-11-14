@@ -11,6 +11,7 @@
 
 #include "flow.h"
 
+#include <arpa/inet.h>
 #include <netdb.h> // For Merlin server.
 #include <stdlib.h>
 #include <stdio.h>
