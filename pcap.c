@@ -92,7 +92,7 @@ uint8_t run_packets_processing (netflow_recording_system_t netflow_records,
         return PCAP_HANDLING_ERROR;
     }
 
-    // close the capture device and deallocate resources
+    // Close the capture device and deallocate resources.
     pcap_close(handle);
 
     return status;
