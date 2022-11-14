@@ -322,6 +322,7 @@ uint8_t bst_move_node (bst_node_t* dst_tree, bst_node_t* node)
     flow_value->tcp_flags = (*node)->value->tcp_flags;
     flow_value->prot = (*node)->value->prot;
     flow_value->tos = (*node)->value->tos;
+    flow_value->cache_id = (*node)->value->cache_id;
 
     // Add to the destination tree.
     status = bst_insert(dst_tree, flow_key, flow_value);
