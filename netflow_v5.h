@@ -115,6 +115,8 @@ struct netflow_recording_system
     struct timeval* first_packet_time;
     struct timeval* last_packet_time;
     uint64_t* cached_flows_number;
+    uint64_t* flows_statistics;
+    uint64_t* sent_packets_statistics;
 };
 
 /*

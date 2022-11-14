@@ -166,8 +166,9 @@ uint8_t export_flows (netflow_recording_system_t netflow_records,
     // Update the cached flows number.
     *(netflow_records->cached_flows_number) -= (uint64_t)flows_number;
 
-    // Printf statistics about sent flows.
-    printf("flows sent: %d\n", flows_number);
+    // Update statistics.
+    *(netflow_records->flows_statistics) += (uint64_t)flows_number;
+    *(netflow_records->sent_packets_statistics) += 1;
 
     return NO_ERROR;
 }

@@ -149,6 +149,14 @@ uint8_t flow_epilogue (netflow_recording_system_t netflow_records,
         disconnect_socket(sending_system->socket);
     }
 
+    if (netflow_records != NULL)
+    {
+        printf("\n");
+        printf("Exported %lu flows in %lu packets\n",
+               *(netflow_records->flows_statistics),
+               *(netflow_records->sent_packets_statistics));
+    }
+
     free_allocated_mem(&options, &netflow_records, &sending_system);
 
     return status;
@@ -160,6 +168,8 @@ uint8_t run_exporter (netflow_recording_system_t netflow_records,
 {
     bst_init(&(netflow_records->tree));
     *(netflow_records->cached_flows_number) = 0;
+    *(netflow_records->flows_statistics) = 0;
+    *(netflow_records->sent_packets_statistics) = 0;
 
     return run_packets_processing(netflow_records, sending_system, options);
 }
@@ -244,6 +254,7 @@ int main (int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    printf("\n");
     printf("End of processing packets ...\n");
 
     return EXIT_SUCCESS;

@@ -173,6 +173,22 @@ uint8_t allocate_recording_system (netflow_recording_system_t* netflow_records)
         return EXIT_FAILURE;
     }
 
+    (*netflow_records)->flows_statistics =
+            (uint64_t*) malloc(sizeof(uint64_t));
+
+    if (!is_allocated((*netflow_records)->flows_statistics))
+    {
+        return EXIT_FAILURE;
+    }
+
+    (*netflow_records)->sent_packets_statistics =
+            (uint64_t*) malloc(sizeof(uint64_t));
+
+    if (!is_allocated((*netflow_records)->sent_packets_statistics))
+    {
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }
 
@@ -470,6 +486,18 @@ void free_recording_system (netflow_recording_system_t* netflow_records)
         {
             free((*netflow_records)->cached_flows_number);
             (*netflow_records)->cached_flows_number = NULL;
+        }
+
+        if (is_allocated((*netflow_records)->flows_statistics))
+        {
+            free((*netflow_records)->flows_statistics);
+            (*netflow_records)->flows_statistics = NULL;
+        }
+
+        if (is_allocated((*netflow_records)->sent_packets_statistics))
+        {
+            free((*netflow_records)->sent_packets_statistics);
+            (*netflow_records)->sent_packets_statistics = NULL;
         }
 
         free(*netflow_records);
